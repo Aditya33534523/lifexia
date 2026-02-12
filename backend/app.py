@@ -12,8 +12,16 @@ def create_app(config_name='default'):
     CORS(app)
     init_db(app)
     
+    # Import blueprints
+    from backend.routes.auth_routes import auth_bp
+    from backend.routes.chat_routes import chat_bp
+    from backend.routes.whatsapp_routes import whatsapp_bp
+    from backend.routes.history_routes import history_bp
+    from backend.routes.upload_routes import upload_bp
     from backend.routes.webhook_routes import webhook_bp
     from backend.routes.map_routes import map_bp
+    
+    # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(whatsapp_bp)
@@ -26,7 +34,6 @@ def create_app(config_name='default'):
     def index():
         return render_template('index.html')
     
-
     @app.route('/favicon.ico')
     @app.route('/apple-touch-icon.png')
     @app.route('/apple-touch-icon-precomposed.png')
@@ -42,3 +49,4 @@ def create_app(config_name='default'):
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True, host='0.0.0.0', port=5000)
+    
