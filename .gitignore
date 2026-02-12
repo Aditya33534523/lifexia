@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.env
+.env.local
+*.db
+*.sqlite3
+logs/
+*.log
+data/uploads/*
+!data/uploads/.gitkeep
+data/chroma_db/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+models/
+*.pth
+*.bin
+
+# Data files (Large PDFs)
+data/*.pdf
+
+# Node.js
+node_modules/
+
+# Python Virtual Environments
+.venv/
