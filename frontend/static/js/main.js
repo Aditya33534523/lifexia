@@ -194,6 +194,28 @@ function closeMapModal() {
     document.getElementById('mapModal').classList.add('hidden');
 }
 
+
+function toggleWhatsAppInput() {
+    const toggle = document.getElementById('whatsappToggle');
+    const container = document.getElementById('whatsappNumberContainer');
+    if (toggle.checked) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `toast-notification toast-${type}`;
+    notification.innerText = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
 // Error handling
 window.addEventListener('error', (e) => {
     console.error('Global error:', e.error);

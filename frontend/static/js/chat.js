@@ -13,8 +13,17 @@ async function sendMessage() {
     // Show typing indicator
     showTypingIndicator();
 
+    // WhatsApp Integration
+    const sendWhatsApp = document.getElementById('whatsappToggle').checked;
+    const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+
+    if (sendWhatsApp && !whatsappNumber) {
+        showNotification('Please enter a WhatsApp number', 'error');
+        return;
+    }
+
     try {
-        const response = await fetch(`${API_BASE}/chat/send`, {
+        const response = await fetch(`${API_BASE}/chat/message`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -23,7 +32,9 @@ async function sendMessage() {
             body: JSON.stringify({
                 message: message,
                 user_email: currentUser.email,
-                session_id: currentSessionId
+                session_id: currentSessionId,
+                send_whatsapp: sendWhatsApp,
+                whatsapp_number: whatsappNumber
             })
         });
 
@@ -36,6 +47,16 @@ async function sendMessage() {
             if (!currentSessionId) {
                 currentSessionId = data.session_id;
             }
+
+            // Show WhatsApp notification if requested
+            if (data.whatsapp) {
+                if (data.whatsapp.sent) {
+                    showNotification('✅ Message sent to WhatsApp!', 'success');
+                } else {
+                    showNotification('❌ WhatsApp send failed', 'error');
+                }
+            }
+
             // Reload chat history to show new conversation
             loadChatHistory();
         } else {
