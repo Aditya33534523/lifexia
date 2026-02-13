@@ -6,6 +6,15 @@
     box-sizing: border-box;
 }
 
+/* LIFEXIA Styles */
+:root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+}
+
+.glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+.gradient-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+
 /* Glassmorphism Effects */
 .glassmorphism {
     background: rgba(255, 255, 255, 0.1);

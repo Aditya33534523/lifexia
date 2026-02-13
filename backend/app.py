@@ -1,79 +1,167 @@
-from flask import Flask, render_template, Response
+"""
+LIFEXIA - AI-Powered Pharma Healthcare Chatbot
+Main Flask Application with RAG, WhatsApp, and Map Integration
+"""
+
+from flask import Flask, render_template, jsonify, request, session
 from flask_cors import CORS
-from backend.config import config
-from backend.utils import init_db
-from backend.services.whatsapp_service import WhatsAppService
+from flask_session import Session
+import os
+from datetime import timedelta
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-def create_app(config_name='default'):
-    print(f"Creating app with config: {config_name}")
-    app = Flask(__name__, 
-                template_folder='../frontend/templates',
-                static_folder='../frontend/static')
-    
-    app.config.from_object(config[config_name])
-    CORS(app)
-    init_db(app)
-    
-    # Initialize WhatsApp Service
-    whatsapp_service = WhatsAppService(
-        access_token=app.config['WHATSAPP_ACCESS_TOKEN'],
-        phone_number_id=app.config['WHATSAPP_PHONE_NUMBER_ID']
-    )
-    
-    # Import blueprints
-    from backend.routes.auth_routes import auth_bp
-    from backend.routes.chat_routes import chat_bp, init_chat_whatsapp
-    from backend.routes.whatsapp_routes import whatsapp_bp, init_whatsapp_service
-    from backend.routes.history_routes import history_bp
-    from backend.routes.upload_routes import upload_bp
-    from backend.routes.webhook_routes import webhook_bp, init_webhook_service
-    from backend.routes.map_routes import map_bp
-    
-    # Initialize services in routes
-    init_whatsapp_service(whatsapp_service)
-    init_webhook_service(whatsapp_service)
-    init_chat_whatsapp(whatsapp_service)
-    
-    # Register blueprints
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(chat_bp)
-    app.register_blueprint(whatsapp_bp)
-    app.register_blueprint(history_bp)
-    app.register_blueprint(upload_bp)
-    app.register_blueprint(webhook_bp)
-    app.register_blueprint(map_bp)
-    
-    @app.route('/')
-    def index():
-        return render_template('index.html')
-    
-    @app.route('/favicon.ico')
-    @app.route('/apple-touch-icon.png')
-    @app.route('/apple-touch-icon-precomposed.png')
-    def app_icon_placeholders():
-        return Response(status=204)
+# Initialize Flask app
+app = Flask(__name__, 
+            template_folder='../frontend/templates',
+            static_folder='../frontend/static')
 
-    @app.route('/health')
-    def health():
-        return {'status': 'healthy', 'service': 'LifeXia'}, 200
-    
-    print("App creation complete")
-    return app
+# Configuration
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'lifexia-secret-key-2024')
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file upload
 
-print(f"App module loaded. Name: {__name__}")
+# Enable CORS
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
+# Initialize session
+Session(app)
+
+# Import services
+from services.rag_service import RAGService
+from services.whatsapp_service import WhatsAppService
+from services.map_service import MapService
+
+# Import routes
+from routes.chat_routes import chat_bp
+from routes.whatsapp_routes import whatsapp_bp
+from routes.webhook_routes import webhook_bp, init_webhook_service
+from routes.map_routes import map_bp
+from routes.auth_routes import auth_bp
+
+# Initialize services
+try:
+    # RAG Service for drug information
+    rag_service = RAGService()
+    logger.info("✅ RAG Service initialized successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to initialize RAG Service: {e}")
+    rag_service = None
+
+try:
+    # WhatsApp Service
+    whatsapp_access_token = os.getenv('WHATSAPP_ACCESS_TOKEN')
+    whatsapp_phone_id = os.getenv('WHATSAPP_PHONE_NUMBER_ID')
+    
+    if whatsapp_access_token and whatsapp_phone_id:
+        whatsapp_service = WhatsAppService(whatsapp_access_token, whatsapp_phone_id)
+        init_webhook_service(whatsapp_service)
+        logger.info("✅ WhatsApp Service initialized successfully")
+    else:
+        whatsapp_service = None
+        logger.warning("⚠️ WhatsApp credentials not found in environment")
+except Exception as e:
+    logger.error(f"❌ Failed to initialize WhatsApp Service: {e}")
+    whatsapp_service = None
+
+try:
+    # Map Service
+    map_service = MapService()
+    logger.info("✅ Map Service initialized successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to initialize Map Service: {e}")
+    map_service = None
+
+# Register blueprints
+app.register_blueprint(chat_bp, url_prefix='/api/chat')
+app.register_blueprint(whatsapp_bp, url_prefix='/api/whatsapp')
+app.register_blueprint(webhook_bp, url_prefix='/api/whatsapp')
+app.register_blueprint(map_bp, url_prefix='/api/map')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+
+# Make services available to routes
+app.config['RAG_SERVICE'] = rag_service
+app.config['WHATSAPP_SERVICE'] = whatsapp_service
+app.config['MAP_SERVICE'] = map_service
+
+# Main routes
+@app.route('/')
+def index():
+    """Main landing page"""
+    return render_template('index.html')
+
+@app.route('/chat')
+def chat_page():
+    """Chat interface page"""
+    return render_template('chat.html')
+
+@app.route('/map')
+def map_page():
+    """Map interface page"""
+    return render_template('map.html')
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint"""
+    services_status = {
+        'rag_service': rag_service is not None,
+        'whatsapp_service': whatsapp_service is not None,
+        'map_service': map_service is not None
+    }
+    
+    return jsonify({
+        'status': 'healthy',
+        'services': services_status,
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Resource not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    print("Starting app execution...")
-    try:
-        app = create_app()
-        print("App instance created. Calling run()...")
-        app.run(debug=True, host='0.0.0.0', port=5000)
-    except Exception as e:
-        print(f"CRITICAL ERROR starting app: {e}")
-        import traceback
-        traceback.print_exc()
+    # Create necessary directories
+    os.makedirs('data', exist_ok=True)
+    os.makedirs('data/uploads', exist_ok=True)
+    os.makedirs('flask_session', exist_ok=True)
+    
+    # Run the application
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV') == 'development'
+    
+    logger.info(f"""
+    ╔══════════════════════════════════════════════════════════╗
+    ║                                                          ║
+    ║              🏥 LIFEXIA Healthcare Chatbot               ║
+    ║                                                          ║
+    ║  AI-Powered Drug Information & Emergency Assistance      ║
+    ║                                                          ║
+    ╚══════════════════════════════════════════════════════════╝
+    
+    📡 Server running on: http://localhost:{port}
+    🤖 RAG Service: {'✅ Active' if rag_service else '❌ Inactive'}
+    📱 WhatsApp API: {'✅ Active' if whatsapp_service else '❌ Inactive'}
+    🗺️  Map Service: {'✅ Active' if map_service else '❌ Inactive'}
+    
+    """)
+    
+    app.run(host='0.0.0.0', port=port, debug=debug)
