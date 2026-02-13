@@ -24,7 +24,7 @@ pip install -r backend/requirements.txt
 
 2. Start the Flask application:
 ```bash
-python backend/app.py
+python3 -m backend.app
 ```
 
 The app will run on `http://localhost:5000`
@@ -87,12 +87,7 @@ POST /api/whatsapp/webhook
 
 ## 🧪 Testing
 
-Run the test script:
-```bash
-python test_whatsapp.py
-```
-
-Or use curl to test directly:
+Use curl to test directly:
 
 ### Send Template Message
 ```bash
@@ -216,14 +211,13 @@ lifexia/
 │   └── services/
 │       ├── __init__.py
 │       └── whatsapp_service.py        # WhatsApp Business API logic
-├── .env                                # Environment variables
-└── test_whatsapp.py                   # Test script
+└── .env                                # Environment variables
 ```
 
 ## 🔄 Next Steps
 
-1. **Start the server**: `python backend/app.py`
-2. **Test the integration**: `python test_whatsapp.py`
+1. **Start the server**: `python3 -m backend.app`
+2. **Test the integration**: Use the curl commands below
 3. **Create custom templates** in Meta Business Suite
 4. **Set up webhook** for receiving messages
 5. **Integrate into your UI** using the API endpoints

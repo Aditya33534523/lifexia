@@ -183,16 +183,6 @@ function closeWhatsAppModal() {
     document.getElementById('whatsappModal').classList.add('hidden');
 }
 
-function showMapModal() {
-    document.getElementById('mapModal').classList.remove('hidden');
-    // Optional: Refresh iframe to ensure fresh data
-    const iframe = document.getElementById('mapIframe');
-    if (iframe) iframe.src = iframe.src;
-}
-
-function closeMapModal() {
-    document.getElementById('mapModal').classList.add('hidden');
-}
 
 
 function toggleWhatsAppInput() {

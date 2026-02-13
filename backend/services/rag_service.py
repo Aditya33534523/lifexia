@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
 from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA
+from langchain_classic.chains.retrieval_qa.base import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import torch
@@ -18,15 +18,20 @@ class RAGService:
         self.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         
         # 2. Load Vector Store
-        if not os.path.exists(PERSIST_DIR):
-            print(f"Warning: Vector DB not found at {PERSIST_DIR}. Please run ingestion script first.")
+        try:
+            if not os.path.exists(PERSIST_DIR):
+                print(f"Warning: Vector DB not found at {PERSIST_DIR}. Please run ingestion script first.")
+                self.vector_store = None
+            else:
+                self.vector_store = Chroma(persist_directory=PERSIST_DIR, embedding_function=self.embeddings)
+                print("Vector Store loaded.")
+        except Exception as e:
+            print(f"Error loading Vector Store (likely Python 3.14/Pydantic v1 incompatibility): {e}")
+            print("Falling back to non-RAG mode.")
             self.vector_store = None
-        else:
-            self.vector_store = Chroma(persist_directory=PERSIST_DIR, embedding_function=self.embeddings)
-            print("Vector Store loaded.")
 
         # 3. Load LLM
-        model_name = os.getenv("LLM_MODEL_NAME", "Qwen/Qwen2.5-3B-Instruct")
+        model_name = os.getenv("LLM_MODEL_NAME", "HuggingFaceTB/SmolLM-135M-Instruct")
         use_gpu = os.getenv("USE_GPU", "False").lower() == "true"
         
         print(f"Loading LLM: {model_name}...")
@@ -34,11 +39,9 @@ class RAGService:
         try:
             tokenizer = AutoTokenizer.from_pretrained(model_name)
             
-            # Determine device
-            if use_gpu and torch.backends.mps.is_available():
-                device = "mps"
-                torch_dtype = torch.float16
-            elif use_gpu and torch.cuda.is_available():
+            # For 4GB RAM, we prioritize CPU and float32 if no GPU
+            # SmolLM-135M is small enough to fit comfortably
+            if use_gpu and torch.cuda.is_available():
                 device = "cuda"
                 torch_dtype = torch.float16
             else:
@@ -50,70 +53,73 @@ class RAGService:
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 torch_dtype=torch_dtype,
-                device_map=device if device != "cpu" else None,
                 trust_remote_code=True,
                 low_cpu_mem_usage=True
             )
             
-            if device == "cpu":
+            if device != "cpu":
                 model = model.to(device)
             
             pipe = pipeline(
                 "text-generation",
                 model=model,
                 tokenizer=tokenizer,
-                max_new_tokens=512,
-                temperature=0.7,
-                do_sample=True,
+                max_new_tokens=256,
+                temperature=0.0, # Greedy decoding for speed
+                do_sample=False,
                 pad_token_id=tokenizer.eos_token_id
             )
             self.llm = HuggingFacePipeline(pipeline=pipe)
             print("LLM loaded successfully.")
         except Exception as e:
             print(f"Error loading LLM: {e}")
-            print("RAG service will not be available.")
+            print("Chat service will not be available.")
             self.llm = None
 
         # 4. Create QA Chain
-        if self.vector_store and self.llm:
+        if self.llm:
+            # SmolLM uses ChatML-like format
             template = """<|im_start|>system
-You are LifeXia, an intelligent pharmacy assistant. Use the following pharmaceutical context to provide a helpful, professional, and accurate answer.
-Your responses must be based ONLY on the provided context. If the context does not contain the answer, politely state that you can only provide information based on official availability.
+You are LifeXia, an intelligent pharmacy assistant. Provide a helpful, professional, and accurate answer.
+{context_msg}
 
-Important Guidelines:
+Guidelines:
 - **Accuracy**: Prioritize accuracy. Do not hallucinate or guess drug interactions or dosages.
 - **Safety**: If a query involves critical safety or severe symptoms, advise consulting a healthcare professional immediately.
-- **Structure**: Use markdown (bold for names/dosages, bullet points for lists) for readability.
-- **Tone**: Empathetic, professional, and concise.
 
-If the context doesn't contain the answer, politely state that you can only provide information based on the official documents available to you.
-
-Context:
-{context}<|im_end|>
-<|im_start|>user
+Question:
 {question}<|im_end|>
 <|im_start|>assistant
 """
-            QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
-            
-            self.qa_chain = RetrievalQA.from_chain_type(
-                llm=self.llm,
-                chain_type="stuff",
-                retriever=self.vector_store.as_retriever(search_kwargs={"k": 5}),
-                return_source_documents=True,
-                chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
-            )
-            print("QA Chain initialized.")
+            self.template = template
+            print("Model template initialized.")
         else:
-            self.qa_chain = None
+            self.template = None
 
     def query(self, question: str):
-        if not self.qa_chain:
-            return "RAG service is still initializing or missing resources. Please try again later."
+        if not self.llm:
+            return "Chat service is still initializing or missing resources. Please try again later."
         
         try:
-            result = self.qa_chain.invoke({"query": question})
-            response = result["result"]
+            # RAG Fallback logic
+            context = ""
+            context_msg = ""
+            
+            if self.vector_store:
+                try:
+                    docs = self.vector_store.similarity_search(question, k=3)
+                    context = "\n".join([d.page_content for d in docs])
+                    context_msg = f"Use the following context to help answer:\n{context}"
+                except Exception as e:
+                    print(f"Similarity search failed: {e}")
+            
+            prompt = self.template.format(
+                context_msg=context_msg,
+                question=question
+            )
+            
+            # Manual invocation as RetrievalQA might fail due to Pydantic
+            response = self.llm.invoke(prompt)
             
             # Clean up response
             target_str = "<|im_start|>assistant\n"

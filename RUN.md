@@ -60,7 +60,4 @@ The "Connect on WhatsApp" feature uses a dynamic QR code generator.
 
 ## 5. Map Data
 The map loads data from `frontend/static/js/locations.json`.
-- To update data, edit `Hospital data (1).xlsx` and run:
-  ```bash
-  python3 convert_data.py
-  ```
+- To update data, edit `Hospital data (1).xlsx` and use the available conversion tools if necessary.

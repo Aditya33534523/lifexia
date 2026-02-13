@@ -26,7 +26,6 @@ def create_app(config_name='default'):
     from backend.routes.history_routes import history_bp
     from backend.routes.upload_routes import upload_bp
     from backend.routes.webhook_routes import webhook_bp, init_webhook_service
-    from backend.routes.map_routes import map_bp
     
     # Initialize services in routes
     init_whatsapp_service(whatsapp_service)
@@ -40,7 +39,6 @@ def create_app(config_name='default'):
     app.register_blueprint(history_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(webhook_bp)
-    app.register_blueprint(map_bp)
     
     @app.route('/')
     def index():
