@@ -444,3 +444,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built with ❤️ for healthcare accessibility in India**
 
 *Empowering patients with knowledge, one message at a time.*# MedRyxa
+# MedRyxa
