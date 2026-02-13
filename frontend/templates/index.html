@@ -7,7 +7,15 @@
     <title>LifeXia - Intelligent Pharmacy Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/lib/marked.umd.min.js"></script>
+
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 
 <body class="gradient-bg min-h-screen">
@@ -127,6 +135,17 @@
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <!-- Health Map Button -->
+                        <button onclick="showMapModal()"
+                            class="flex items-center gap-2 px-4 py-2 glassmorphism-strong hover:bg-white/30 text-white rounded-xl transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                                </path>
+                            </svg>
+                            <span class="hidden sm:inline">Health Map</span>
+                        </button>
+
                         <button id="adminAlertBtn" onclick="showBroadcastModal()"
                             class="hidden flex items-center gap-2 px-4 py-2 bg-red-500/50 hover:bg-red-500/70 text-white rounded-xl transition-all">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,6 +253,133 @@
         </div>
     </div>
 
+    <!-- Enhanced Map Modal -->
+    <div id="mapModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-50">
+        <div class="h-full flex flex-col">
+            <!-- Header -->
+            <div class="glassmorphism-strong border-b border-white/10 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-white font-black text-xl uppercase tracking-wider">Health Grid</h2>
+                                <p class="text-white/60 text-[10px] uppercase tracking-widest font-bold">Verified
+                                    Infrastructure</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button onclick="refreshSearch()"
+                            class="flex items-center gap-2 px-4 py-2 glassmorphism hover:bg-white/20 text-white rounded-xl transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
+                            <span class="text-[10px] uppercase tracking-widest font-bold hidden sm:inline">Refresh
+                                Search</span>
+                        </button>
+
+                        <button onclick="closeMapModal()"
+                            class="p-2 glassmorphism hover:bg-white/20 text-white rounded-xl transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Sidebar -->
+                <div class="w-80 glassmorphism border-r border-white/10 flex flex-col">
+                    <!-- Filter Section -->
+                    <div class="p-4 border-b border-white/10">
+                        <div class="mb-4">
+                            <label class="block text-white/80 text-[10px] uppercase tracking-widest font-bold mb-2">
+                                Resource Filter
+                            </label>
+                            <select id="mapCategoryFilter" onchange="filterMapCategory(this.value)"
+                                class="w-full px-4 py-3 glassmorphism rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 bg-slate-800/50 font-semibold uppercase tracking-wide">
+                                <option value="ALL RESOURCES">All Resources</option>
+                                <option value="Hospital">Hospitals</option>
+                                <option value="Pharmacy">Pharmacies</option>
+                                <option value="Orthopaedic">Orthopaedic</option>
+                                <option value="Gynaecology">Gynaecology</option>
+                                <option value="Multispeciality">Multispeciality</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span id="locationCount"
+                                    class="text-white/80 text-[10px] uppercase tracking-widest font-bold">
+                                    Loading...
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Locations List -->
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" id="locationsList">
+                        <!-- Locations will be dynamically inserted here -->
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="p-4 border-t border-white/10">
+                        <p class="text-white/60 text-[9px] uppercase tracking-widest font-bold mb-2">Card Acceptance</p>
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <span
+                                    class="text-white/70 text-[9px] uppercase tracking-wider font-bold">Ayushman</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+                                <span class="text-white/70 text-[9px] uppercase tracking-wider font-bold">Maa
+                                    Amrutam</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="flex-1 relative">
+                    <div id="map" class="w-full h-full"></div>
+
+                    <!-- Map Controls Overlay -->
+                    <div class="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
+                        <button onclick="map && map.zoomIn()"
+                            class="p-2 glassmorphism-strong hover:bg-white/30 text-white rounded-lg transition-all shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                        <button onclick="map && map.zoomOut()"
+                            class="p-2 glassmorphism-strong hover:bg-white/30 text-white rounded-lg transition-all shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Broadcast Modal -->
     <div id="broadcastModal"
@@ -344,12 +490,17 @@
         </div>
     </div>
 
+    <!-- Leaflet JavaScript -->
+
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
     <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
     <script src="{{ url_for('static', filename='js/broadcast.js') }}"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 </body>
 
 </html>

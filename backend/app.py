@@ -3,8 +3,14 @@ from flask_cors import CORS
 from backend.config import config
 from backend.utils import init_db
 from backend.services.whatsapp_service import WhatsAppService
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def create_app(config_name='default'):
+    print(f"Creating app with config: {config_name}")
     app = Flask(__name__, 
                 template_folder='../frontend/templates',
                 static_folder='../frontend/static')
@@ -26,6 +32,7 @@ def create_app(config_name='default'):
     from backend.routes.history_routes import history_bp
     from backend.routes.upload_routes import upload_bp
     from backend.routes.webhook_routes import webhook_bp, init_webhook_service
+    from backend.routes.map_routes import map_bp
     
     # Initialize services in routes
     init_whatsapp_service(whatsapp_service)
@@ -39,6 +46,7 @@ def create_app(config_name='default'):
     app.register_blueprint(history_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(webhook_bp)
+    app.register_blueprint(map_bp)
     
     @app.route('/')
     def index():
@@ -54,8 +62,18 @@ def create_app(config_name='default'):
     def health():
         return {'status': 'healthy', 'service': 'LifeXia'}, 200
     
+    print("App creation complete")
     return app
 
+print(f"App module loaded. Name: {__name__}")
+
 if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("Starting app execution...")
+    try:
+        app = create_app()
+        print("App instance created. Calling run()...")
+        app.run(debug=True, host='0.0.0.0', port=5000)
+    except Exception as e:
+        print(f"CRITICAL ERROR starting app: {e}")
+        import traceback
+        traceback.print_exc()
