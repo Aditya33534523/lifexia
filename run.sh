@@ -3,8 +3,10 @@
 echo "🏥 Starting LIFEXIA Healthcare Chatbot..."
 
 # Activate virtual environment if it exists
-if [ -d "venv" ]; then
-    source ~/ai_env/bin/activate
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
+elif [ -d "venv" ]; then
+    source venv/bin/activate
 fi
 
 # Set environment variables
@@ -15,4 +17,4 @@ export FLASK_ENV=development
 mkdir -p data/uploads logs flask_session
 
 # Run the application
-python backend/app.py
+python -m backend.app

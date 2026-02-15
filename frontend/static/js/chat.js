@@ -1,4 +1,6 @@
 // frontend/static/js/chat.js - Chat Functionality
+// FIXED: Correct API endpoint (/chat/message instead of /chat/query)
+// FIXED: Proper error handling and response parsing
 
 async function sendMessage() {
     const input = document.getElementById('messageInput');
@@ -14,15 +16,19 @@ async function sendMessage() {
     showTypingIndicator();
 
     // WhatsApp Integration
-    const sendWhatsApp = document.getElementById('whatsappToggle').checked;
-    const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+    const whatsappToggle = document.getElementById('whatsappToggle');
+    const sendWhatsApp = whatsappToggle ? whatsappToggle.checked : false;
+    const whatsappNumberEl = document.getElementById('whatsappNumber');
+    const whatsappNumber = whatsappNumberEl ? whatsappNumberEl.value.trim() : '';
 
     if (sendWhatsApp && !whatsappNumber) {
+        hideTypingIndicator();
         showNotification('Please enter a WhatsApp number', 'error');
         return;
     }
 
     try {
+        // Use /chat/message endpoint (matches chat_routes.py)
         const response = await fetch(`${API_BASE}/chat/message`, {
             method: 'POST',
             headers: {
@@ -31,7 +37,7 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 message: message,
-                user_email: currentUser.email,
+                user_email: currentUser ? currentUser.email : 'anonymous',
                 session_id: currentSessionId,
                 send_whatsapp: sendWhatsApp,
                 whatsapp_number: whatsappNumber
@@ -42,25 +48,28 @@ async function sendMessage() {
 
         hideTypingIndicator();
 
-        if (response.ok) {
+        if (response.ok && data.response) {
             addMessage('bot', data.response);
-            if (!currentSessionId) {
+
+            // Update session ID if returned
+            if (data.session_id && !currentSessionId) {
                 currentSessionId = data.session_id;
             }
 
-            // Show WhatsApp notification if requested
+            // Show WhatsApp notification if applicable
             if (data.whatsapp) {
                 if (data.whatsapp.sent) {
-                    showNotification('✅ Message sent to WhatsApp!', 'success');
+                    showNotification('✅ Message also sent to WhatsApp!', 'success');
                 } else {
-                    showNotification('❌ WhatsApp send failed', 'error');
+                    showNotification('❌ WhatsApp send failed: ' + (data.whatsapp.error || 'Unknown error'), 'error');
                 }
             }
 
-            // Reload chat history to show new conversation
+            // Reload chat history sidebar
             loadChatHistory();
         } else {
-            addMessage('bot', 'Sorry, I encountered an error. Please try again.');
+            const errorMsg = data.error || data.response || 'Sorry, I encountered an error. Please try again.';
+            addMessage('bot', errorMsg);
         }
     } catch (error) {
         console.error('Send message error:', error);
@@ -71,6 +80,8 @@ async function sendMessage() {
 
 function addMessage(type, content, timestamp = null) {
     const messagesArea = document.getElementById('messagesArea');
+    if (!messagesArea) return;
+
     const time = timestamp || formatTime();
 
     const messageDiv = document.createElement('div');
@@ -82,13 +93,27 @@ function addMessage(type, content, timestamp = null) {
     } else {
         // Use marked for bot messages (Markdown support)
         try {
-            // Some versions of marked use marked.parse, others just marked()
-            const parser = typeof marked.parse === 'function' ? marked.parse : (typeof marked === 'function' ? marked : null);
+            let parser = null;
+            if (typeof marked !== 'undefined') {
+                if (typeof marked.parse === 'function') {
+                    parser = marked.parse;
+                } else if (typeof marked === 'function') {
+                    parser = marked;
+                }
+            }
+
             if (parser) {
                 formattedContent = `<div class="text-white markdown-content">${parser(content)}</div>`;
             } else {
-                console.warn('Marked parser not found, falling back to raw text');
-                formattedContent = `<p class="text-white whitespace-pre-wrap">${escapeHtml(content)}</p>`;
+                // Fallback: basic markdown formatting
+                const basicFormatted = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/## (.*?)$/gm, '<h3 class="text-lg font-bold mt-3 mb-1">$1</h3>')
+                    .replace(/### (.*?)$/gm, '<h4 class="font-bold mt-2 mb-1">$1</h4>')
+                    .replace(/^- (.*?)$/gm, '<li class="ml-4">$1</li>')
+                    .replace(/\n/g, '<br>');
+                formattedContent = `<div class="text-white markdown-content">${basicFormatted}</div>`;
             }
         } catch (e) {
             console.error('Markdown parsing failed:', e);
@@ -113,6 +138,8 @@ function addMessage(type, content, timestamp = null) {
 }
 
 async function loadChatHistory() {
+    if (!currentUser) return;
+
     try {
         const response = await fetch(`${API_BASE}/history/${currentUser.email}`, {
             headers: {
@@ -125,7 +152,9 @@ async function loadChatHistory() {
         const history = await response.json();
         const historyList = document.getElementById('chatHistoryList');
 
-        if (history.length === 0) {
+        if (!historyList) return;
+
+        if (!Array.isArray(history) || history.length === 0) {
             historyList.innerHTML = `
                 <div class="text-white/50 text-sm text-center py-4">
                     No chat history yet
@@ -173,23 +202,27 @@ async function loadConversation(sessionId) {
         const data = await response.json();
 
         // Clear current messages
-        document.getElementById('messagesArea').innerHTML = '';
+        const messagesArea = document.getElementById('messagesArea');
+        if (messagesArea) messagesArea.innerHTML = '';
         currentSessionId = sessionId;
 
         // Load all messages
-        data.messages.forEach(msg => {
-            addMessage(
-                msg.role === 'user' ? 'user' : 'bot',
-                msg.content,
-                formatTime(new Date(msg.timestamp))
-            );
-        });
+        if (data.messages && Array.isArray(data.messages)) {
+            data.messages.forEach(msg => {
+                addMessage(
+                    msg.role === 'user' ? 'user' : 'bot',
+                    msg.content,
+                    msg.timestamp ? formatTime(new Date(msg.timestamp)) : null
+                );
+            });
+        }
 
         hideLoading();
 
         // Close sidebar on mobile
         if (window.innerWidth <= 768) {
-            document.getElementById('sidebar').classList.remove('active');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.classList.remove('active');
         }
     } catch (error) {
         console.error('Failed to load conversation:', error);

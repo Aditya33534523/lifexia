@@ -1,20 +1,25 @@
 // frontend/static/js/broadcast.js - Advanced Multi-Template Broadcast
+// FIXED: Proper template handling for Meta WhatsApp Business API
+// FIXED: Uses hello_world template that's pre-approved on your Meta account
 
 // Template Configurations
-// NOTE: keys must match template names in Meta Business Manager
+// Keys must match template names in Meta Business Manager
 const TEMPLATE_CONFIGS = {
     'hello_world': {
-        name: 'General Welcome',
-        variables: [] // No variables needed
+        name: 'General Welcome (Pre-approved)',
+        description: 'Standard Meta test template - works immediately',
+        variables: [] // No variables needed for hello_world
     },
     'pharmacy_alert': {
         name: 'Emergency Alert',
+        description: 'Must be approved in Meta Business Manager first',
         variables: [
             { id: 'v1', label: 'Medicine Name', placeholder: 'e.g., Ibuprofen' }
         ]
     },
     'med_reminder': {
         name: 'Medication Reminder',
+        description: 'Must be approved in Meta Business Manager first',
         variables: [
             { id: 'v1', label: 'Medicine Name', placeholder: 'e.g., Paracetamol' },
             { id: 'v2', label: 'Dosage/Time', placeholder: 'e.g., 500mg after breakfast' }
@@ -22,12 +27,14 @@ const TEMPLATE_CONFIGS = {
     },
     'stock_update': {
         name: 'Stock Update',
+        description: 'Must be approved in Meta Business Manager first',
         variables: [
             { id: 'v1', label: 'Medicine Name', placeholder: 'e.g., Amoxicillin' }
         ]
     },
     'safety_tip': {
         name: 'Safety Tip',
+        description: 'Must be approved in Meta Business Manager first',
         variables: [
             { id: 'v1', label: 'Medicine Name', placeholder: 'e.g., Warfarin' },
             { id: 'v2', label: 'Interaction to Avoid', placeholder: 'e.g., Alcohol' }
@@ -35,6 +42,7 @@ const TEMPLATE_CONFIGS = {
     },
     'custom_text': {
         name: 'Custom Text (24h Window Only)',
+        description: 'Only works if recipient messaged you in last 24 hours',
         variables: []
     }
 };
@@ -45,8 +53,12 @@ function showBroadcastModal() {
         modal.classList.remove('hidden');
         document.getElementById('broadcastStatus').innerHTML = '';
 
-        // Reset inputs if needed? Keeping them might be handled better
-        // But let's trigger change to ensure UI is consistent
+        // Pre-fill admin number from env
+        const numbersInput = document.getElementById('broadcastNumbers');
+        if (numbersInput && !numbersInput.value.trim()) {
+            numbersInput.value = '919824794027'; // Admin number from config
+        }
+
         handleTemplateChange();
     }
 }
@@ -65,9 +77,11 @@ function handleTemplateChange() {
     const template = selector.value;
     const varContainer = document.getElementById('templateVariablesContainer');
     const msgContainer = document.getElementById('customMessageContainer');
+    const statusDiv = document.getElementById('broadcastStatus');
 
-    // Clear previous inputs
+    // Clear previous
     varContainer.innerHTML = '';
+    if (statusDiv) statusDiv.innerHTML = '';
 
     if (template === 'custom_text') {
         varContainer.classList.add('hidden');
@@ -92,6 +106,15 @@ function handleTemplateChange() {
         } else {
             varContainer.classList.add('hidden');
         }
+
+        // Show description/info for selected template
+        if (config && template !== 'hello_world') {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'mt-1';
+            infoDiv.innerHTML = `<p class="text-white/40 text-[10px]">ℹ️ ${config.description}</p>`;
+            varContainer.appendChild(infoDiv);
+            varContainer.classList.remove('hidden');
+        }
     }
 }
 
@@ -100,18 +123,16 @@ async function handleBroadcast() {
     const template = selector.value;
     const numbersInput = document.getElementById('broadcastNumbers').value.trim();
     const statusDiv = document.getElementById('broadcastStatus');
-    // Try to find the button more robustly or just add an ID to it if possible, but selector is fine
-    // Assuming the button calls this function
     const sendButton = document.querySelector('button[onclick="handleBroadcast()"]');
 
     if (!numbersInput) {
-        statusDiv.innerHTML = '<p class="text-red-400">Please provide recipient numbers.</p>';
+        statusDiv.innerHTML = '<p class="text-red-400">⚠️ Please provide recipient numbers.</p>';
         return;
     }
 
     const numbers = numbersInput.split(',').map(n => n.trim()).filter(n => n.length > 0);
     if (numbers.length === 0) {
-        statusDiv.innerHTML = '<p class="text-red-400">Please provide valid recipient numbers.</p>';
+        statusDiv.innerHTML = '<p class="text-red-400">⚠️ Please provide valid recipient numbers.</p>';
         return;
     }
 
@@ -122,14 +143,14 @@ async function handleBroadcast() {
     if (template === 'custom_text') {
         const message = document.getElementById('broadcastMessage').value.trim();
         if (!message) {
-            statusDiv.innerHTML = '<p class="text-red-400">Please enter a message for custom text.</p>';
+            statusDiv.innerHTML = '<p class="text-red-400">⚠️ Please enter a message for custom text.</p>';
             return;
         }
         payload.message = message;
     } else {
         payload.template_name = template;
 
-        // Extract variables if any
+        // Extract template variables if any
         const config = TEMPLATE_CONFIGS[template];
         if (config && config.variables.length > 0) {
             const components = [{
@@ -143,7 +164,7 @@ async function handleBroadcast() {
                 const val = input ? input.value.trim() : '';
 
                 if (!val) {
-                    statusDiv.innerHTML = `<p class="text-red-400">Please fill in ${v.label}.</p>`;
+                    statusDiv.innerHTML = `<p class="text-red-400">⚠️ Please fill in "${v.label}".</p>`;
                     missing = true;
                     break;
                 }
@@ -160,13 +181,17 @@ async function handleBroadcast() {
     }
 
     // UI Feedback
-    statusDiv.innerHTML = '<p class="text-white/70 animate-pulse">Sending broadcast...</p>';
+    statusDiv.innerHTML = `
+        <div class="flex items-center gap-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+            <p class="text-white/70">Sending broadcast to ${numbers.length} recipient(s)...</p>
+        </div>
+    `;
     if (sendButton) sendButton.disabled = true;
 
     try {
-        console.log('Sending Broadcast Payload:', payload);
+        console.log('📤 Sending Broadcast Payload:', JSON.stringify(payload, null, 2));
 
-        // Define API_BASE if not defined (fallback)
         const baseUrl = (typeof API_BASE !== 'undefined') ? API_BASE : '/api';
 
         const response = await fetch(`${baseUrl}/whatsapp/broadcast`, {
@@ -179,27 +204,42 @@ async function handleBroadcast() {
         });
 
         const data = await response.json();
-        console.log('Broadcast Response:', data);
+        console.log('📥 Broadcast Response:', data);
 
-        if (response.ok) {
-            statusDiv.innerHTML = `<p class="text-green-400">Broadcast sent successfully to ${numbers.length} recipients.</p>`;
+        if (response.ok && data.success) {
+            const result = data.broadcast_result || {};
+            const sentCount = result.sent || 0;
+            const failedCount = result.failed || 0;
+            const totalCount = result.total || numbers.length;
+
+            let statusHtml = `<p class="text-green-400">✅ Broadcast sent successfully! (${sentCount}/${totalCount} delivered)</p>`;
+
+            if (failedCount > 0 && result.errors && result.errors.length > 0) {
+                statusHtml += `<p class="text-yellow-400 text-xs mt-1">⚠️ ${failedCount} failed:</p>`;
+                result.errors.forEach(err => {
+                    statusHtml += `<p class="text-red-300 text-xs ml-2">• ${err.number}: ${err.error_message || err.error || 'Unknown error'}</p>`;
+                });
+            }
+
+            statusDiv.innerHTML = statusHtml;
+
             setTimeout(() => {
                 closeBroadcastModal();
                 if (sendButton) sendButton.disabled = false;
                 statusDiv.innerHTML = '';
-            }, 2000);
+            }, 3000);
         } else {
-            statusDiv.innerHTML = `<p class="text-red-400">Error: ${data.error || 'Failed to send broadcast'}</p>`;
+            statusDiv.innerHTML = `<p class="text-red-400">❌ Error: ${data.error || 'Failed to send broadcast'}</p>`;
             if (sendButton) sendButton.disabled = false;
         }
     } catch (error) {
         console.error('Broadcast error:', error);
-        statusDiv.innerHTML = '<p class="text-red-400">Connection error. Please try again. Check console for details.</p>';
+        statusDiv.innerHTML = '<p class="text-red-400">❌ Connection error. Please check your network and try again.</p>';
         if (sendButton) sendButton.disabled = false;
     }
 }
 
-// Ensure handleTemplateChange is called on load if specific elements exist
+// Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
     const selector = document.getElementById('templateSelector');
     if (selector) {

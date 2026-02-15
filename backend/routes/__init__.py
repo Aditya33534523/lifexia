@@ -7,5 +7,7 @@ from .whatsapp_routes import whatsapp_bp
 from .webhook_routes import webhook_bp
 from .map_routes import map_bp
 from .auth_routes import auth_bp
+from .history_routes import history_bp
+from .upload_routes import upload_bp
 
-__all__ = ['chat_bp', 'whatsapp_bp', 'webhook_bp', 'map_bp', 'auth_bp']
+__all__ = ['chat_bp', 'whatsapp_bp', 'webhook_bp', 'map_bp', 'auth_bp', 'history_bp', 'upload_bp']

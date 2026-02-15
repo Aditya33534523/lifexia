@@ -2,446 +2,270 @@
 
 **LIFEXIA** is an intelligent, RAG-based pharmaceutical healthcare chatbot designed to provide **accurate drug information** in emergency situations. Built with patient safety as the top priority, LIFEXIA delivers medication information, dosage guidelines, and safety warnings in a format suitable for both patients and healthcare students.
 
-## 🌟 Key Features
-
-### 🤖 RAG-Based Drug Information System
-- **Accuracy-First Approach**: Retrieval-Augmented Generation ensures factual, verified drug information
-- **Patient vs Student Modes**: Different information detail levels
-  - **Patient Mode**: Practical usage, safety warnings, when to seek help
-  - **Student Mode**: Technical details, pharmacology, clinical guidelines
-- **Emergency Drug Database**: Quick access to common emergency medications
-- **No Formulation Details**: Focuses on usage, dosage, and safety (not manufacturing)
-
-### 📱 WhatsApp Business API Integration
-- **Medication Reminders**: Automated reminders for medication schedules
-- **Emergency Alerts**: Instant drug safety alerts and recalls
-- **Prescription Notifications**: Alert when prescriptions are ready
-- **Hospital Directions**: Send location and directions via WhatsApp
-- **Broadcast Alerts**: Mass notifications for critical safety information
-- **24-Hour Messaging Window**: Conversation management with Meta Cloud API
-
-### 🗺️ Interactive Hospital & Pharmacy Map
-- **Nearby Facilities**: Find hospitals and pharmacies based on location
-- **Ayushman Bharat Card**: Filter facilities accepting PMJAY cards
-- **MAA Vatsalya Card**: Maternity care facilities with MAA card support
-- **Real-Time Status**: Open/closed status with operating hours
-- **Google Maps Integration**: One-click directions to facilities
-- **Specialty Filtering**: Search by medical specialty (Orthopaedic, Gynaecology, etc.)
-- **Distance & ETA**: Calculate distance and estimated travel time
-- **Hospital Leaflets**: Download facility information brochures
-
-## 🏗️ Architecture
-
-```
-LIFEXIA/
-├── backend/
-│   ├── app.py                 # Main Flask application
-│   ├── services/
-│   │   ├── rag_service.py     # Drug information RAG system
-│   │   ├── whatsapp_service.py # WhatsApp Business API
-│   │   └── map_service.py     # Hospital/pharmacy location service
-│   ├── routes/
-│   │   ├── chat_routes.py     # Chatbot API endpoints
-│   │   ├── whatsapp_routes.py # WhatsApp messaging endpoints
-│   │   ├── webhook_routes.py  # Meta webhook handler
-│   │   ├── map_routes.py      # Map & location endpoints
-│   │   └── auth_routes.py     # User authentication
-│   └── models/
-│       └── database.py        # Database models (optional)
-├── frontend/
-│   ├── templates/
-│   │   ├── index.html         # Landing page
-│   │   ├── chat.html          # Chat interface
-│   │   └── map.html           # Map interface
-│   └── static/
-│       ├── css/
-│       ├── js/
-│       └── images/
-├── data/
-│   ├── drug_database/         # Drug information files
-│   └── uploads/               # User uploads
-└── docs/
-    ├── API.md                 # API documentation
-    ├── WHATSAPP_SETUP.md      # WhatsApp integration guide
-    └── DEPLOYMENT.md          # Deployment instructions
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.8 or higher
-- Ollama (for local LLM) or OpenAI API key
-- WhatsApp Business Account (Meta Developer Platform)
-- Google Maps API key (optional)
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/lifexia.git
-cd lifexia
-```
-
-2. **Create virtual environment**
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Set up environment variables**
-```bash
-cp .env.example .env
-# Edit .env with your API keys and configuration
-```
-
-5. **Initialize the database** (if using MongoDB)
-```bash
-# The app will create necessary collections on first run
-```
-
-6. **Run the application**
-```bash
-python backend/app.py
-```
-
-The application will be available at `http://localhost:5000`
-
-## 📱 WhatsApp Integration Setup
-
-### Step 1: Create Meta Developer Account
-1. Go to [Meta for Developers](https://developers.facebook.com/)
-2. Create a new app or use existing business account
-3. Add WhatsApp product to your app
-
-### Step 2: Get Credentials
-From the WhatsApp dashboard:
-- **Access Token**: Found in API Setup
-- **Phone Number ID**: Your WhatsApp Business phone number ID
-- **Business Account ID**: Your WhatsApp Business Account ID
-
-### Step 3: Configure Webhook
-1. Set webhook URL: `https://yourdomain.com/api/whatsapp/webhook`
-2. Set verify token: `lifexia_webhook_verify_2024`
-3. Subscribe to `messages` webhook field
-
-### Step 4: Update .env File
-```env
-WHATSAPP_ACCESS_TOKEN=your_access_token
-WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
-WHATSAPP_BUSINESS_ACCOUNT_ID=your_account_id
-```
-
-### Step 5: Test Integration
-```bash
-curl -X POST http://localhost:5000/api/whatsapp/send-message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "to_number": "919876543210",
-    "message": "Hello from LIFEXIA!"
-  }'
-```
-
-See [docs/WHATSAPP_SETUP.md](docs/WHATSAPP_SETUP.md) for detailed guide.
-
-## 🗺️ Map System Features
-
-### Hospital Information Includes:
-- Name, address, contact details
-- Medical specialties available
-- Emergency services (24/7 availability)
-- Ayushman Bharat card acceptance
-- MAA Vatsalya card acceptance
-- Cashless insurance companies accepted
-- Hospital certifications
-- Distance from user location
-- Estimated travel time
-- Real-time open/closed status
-- Downloadable facility leaflets
-- Google Maps directions link
-
-### API Endpoints:
-```javascript
-// Get nearby hospitals
-GET /api/map/nearby-hospitals?lat=23.0225&lon=72.5714&radius=20
-
-// Filter by Ayushman card
-GET /api/map/nearby-hospitals?lat=23.0225&lon=72.5714&ayushman=true
-
-// Get emergency hospitals
-GET /api/map/emergency?lat=23.0225&lon=72.5714
-
-// Search facilities
-GET /api/map/search?q=orthopaedic&type=HOSPITAL
-```
-
-## 💊 Drug Information System
-
-### Supported Drug Information:
-- Generic and brand names
-- Standard dosage guidelines
-- Administration timing
-- Medical uses/indications
-- Safety warnings & contraindications
-- Common side effects
-- Drug interactions
-- Emergency protocols
-
-### API Usage:
-```javascript
-// Ask about medication
-POST /api/chat/query
-{
-  "message": "Tell me about Aspirin",
-  "user_type": "patient"  // or "student"
-}
-
-// Direct drug search
-POST /api/chat/drug-search
-{
-  "drug_name": "Metformin",
-  "user_type": "patient"
-}
-
-// Get emergency drugs list
-GET /api/chat/emergency-drugs
-```
-
-### Patient Mode Response Example:
-```
-**Aspirin** (Acetylsalicylic Acid)
-
-**What it's used for:**
-Pain relief, fever reduction, heart attack prevention
-
-**How to take it:**
-Adults: 75-325mg daily. Emergency (heart attack): 160-325mg chewed
-
-**When to take:**
-With food to reduce stomach irritation
-
-**⚠️ Important Warnings:**
-Avoid in children under 16, bleeding disorders, stomach ulcers
-
-**🚨 EMERGENCY NOTE:**
-This information is for reference only. In an emergency, 
-always call 108 or visit the nearest hospital immediately.
-```
-
-## 🔔 WhatsApp Notification Types
-
-### 1. Medication Reminders
-```python
-POST /api/whatsapp/medication-reminder
-{
-  "to_number": "919876543210",
-  "medication_name": "Metformin",
-  "dosage": "500mg twice daily",
-  "time": "9:00 AM & 9:00 PM"
-}
-```
-
-### 2. Emergency Alerts
-```python
-POST /api/whatsapp/emergency-alert
-{
-  "to_number": "919876543210",
-  "alert_type": "Drug Recall",
-  "details": "Immediate recall of XYZ tablets",
-  "location": "Star Hospital - 2.5 km away"
-}
-```
-
-### 3. Hospital Directions
-```python
-POST /api/whatsapp/hospital-directions
-{
-  "to_number": "919876543210",
-  "hospital_name": "Star Hospital",
-  "address": "Ahmedabad, Gujarat",
-  "google_maps_link": "https://maps.google.com/...",
-  "distance": "2.5 km",
-  "eta": "8 minutes"
-}
-```
-
-### 4. Ayushman Card Information
-```python
-POST /api/whatsapp/ayushman-info
-{
-  "to_number": "919876543210",
-  "hospital_name": "Civil Hospital Ahmedabad",
-  "services": ["Emergency", "Surgery", "Maternity"]
-}
-```
-
-## 📊 Database Schema
-
-### Hospitals Collection
-```javascript
-{
-  "id": "unique_id",
-  "name": "Hospital Name",
-  "latitude": 23.0225,
-  "longitude": 72.5714,
-  "type": "HOSPITAL",
-  "category": "Multi-Specialty",
-  "speciality": ["Cardiology", "Neurology"],
-  "address": "Full address",
-  "phone": "+91-9876543210",
-  "emergency": true,
-  "services": ["Emergency", "ICU", "Surgery"],
-  "ayushman_card": true,
-  "maa_card": true,
-  "cashless_companies": ["ICICI Lombard", "HDFC Ergo"],
-  "certifications": ["NABH Certified"],
-  "open_24_7": true,
-  "ratings": 4.5,
-  "opening_hours": {},
-  "leaflet_url": "/static/leaflets/hospital.pdf"
-}
-```
-
-## 🔒 Security Considerations
-
-1. **API Key Protection**: Never commit `.env` file to repository
-2. **WhatsApp Rate Limiting**: Implement rate limiting to avoid spam flags
-3. **User Authentication**: Session-based auth for web interface
-4. **HTTPS Only**: Use HTTPS in production for webhook endpoints
-5. **Input Validation**: Sanitize all user inputs
-6. **Error Handling**: Don't expose internal errors to users
-
-## 🌐 Deployment
-
-### Option 1: Railway.app
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login and deploy
-railway login
-railway init
-railway up
-```
-
-### Option 2: Heroku
-```bash
-# Install Heroku CLI
-heroku create lifexia
-
-# Deploy
-git push heroku main
-```
-
-### Option 3: Docker
-```bash
-# Build image
-docker build -t lifexia .
-
-# Run container
-docker run -p 5000:5000 --env-file .env lifexia
-```
-
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
-
-## 🧪 Testing
-
-### Run Tests
-```bash
-pytest tests/
-```
-
-### Test Coverage
-```bash
-pytest --cov=backend tests/
-```
-
-### Manual API Testing
-```bash
-# Test chat endpoint
-curl -X POST http://localhost:5000/api/chat/query \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is Aspirin used for?", "user_type": "patient"}'
-
-# Test map endpoint
-curl "http://localhost:5000/api/map/nearby-hospitals?lat=23.0225&lon=72.5714"
-
-# Test WhatsApp
-curl -X POST http://localhost:5000/api/whatsapp/send-message \
-  -H "Content-Type: application/json" \
-  -d '{"to_number": "919876543210", "message": "Test message"}'
-```
-
-## 📈 Performance
-
-- **Response Time**: < 500ms for drug queries
-- **RAG Retrieval**: < 200ms for vector search
-- **WhatsApp Delivery**: < 3 seconds
-- **Map Queries**: < 100ms for nearby search
-- **Concurrent Users**: Supports 100+ simultaneous users
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Meta WhatsApp Business API**: For messaging infrastructure
-- **Langchain**: For RAG implementation
-- **Sentence Transformers**: For semantic search
-- **OpenStreetMap**: For mapping data
-- **Anthropic**: For AI assistance in development
-
-## 📞 Support
-
-- **Emergency**: Call 108 (India)
-- **Technical Support**: support@lifexia.com
-- **Documentation**: https://docs.lifexia.com
-- **GitHub Issues**: https://github.com/yourusername/lifexia/issues
-
-## 🎯 Roadmap
-
-- [ ] Multi-language support (Hindi, Gujarati, etc.)
-- [ ] Voice message support in WhatsApp
-- [ ] Prescription image analysis with OCR
-- [ ] Integration with pharmacy inventory systems
-- [ ] Mobile app (iOS & Android)
-- [ ] Telemedicine integration
-- [ ] AI-powered symptom checker
-- [ ] Medicine price comparison
-
-## ⚠️ Disclaimer
-
-**IMPORTANT**: LIFEXIA is designed to provide general drug information for reference purposes only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. 
-
-**Always consult a qualified healthcare professional before:**
-- Starting any new medication
-- Stopping any prescribed medication
-- Changing medication dosages
-- Making any health-related decisions
-
-**In case of medical emergency:**
-- Call emergency services immediately (108 in India)
-- Visit the nearest hospital emergency department
-- Do not rely solely on chatbot information for emergency situations
+---
+
+## 🔧 Bugs Fixed (This Update)
+
+### 1. ❌ Chat Not Working on `localhost:5000/` After Sign-In → ✅ FIXED
+**Root Cause:** The `index.html` frontend called `/api/chat/message` but `chat_routes.py` only had `/api/chat/query`. These two endpoints were mismatched.
+
+**Fix Applied:**
+- Added `/message` endpoint in `chat_routes.py` that handles the full chat flow including WhatsApp forwarding
+- Updated `chat.js` to correctly call `/api/chat/message`
+- Updated `app.py` to register all blueprints (including `history_bp` and `upload_bp` which were missing)
+
+### 2. ❌ RAG Hallucination on `localhost:5000/chat` → ✅ FIXED
+**Root Cause:** When ML dependencies aren't installed (no PyTorch/LangChain), the RAG service returned 503 errors or used the LLM without grounding, causing hallucinated responses.
+
+**Fix Applied:**
+- Built a **comprehensive verified drug database** with 15 medications (Paracetamol, Aspirin, Ibuprofen, Amoxicillin, Metformin, Amlodipine, Omeprazole, Cetirizine, Atorvastatin, Epinephrine, Diazepam, Salbutamol, Ciprofloxacin, Losartan, Insulin)
+- Database includes **brand-name aliases** (Dolo 650, Crocin, Ecosprin, Brufen, etc.)
+- Drug info sourced from **Indian Pharmacopoeia 2022, NLEM 2022, WHO Essential Medicines List**
+- **Patient vs Student mode** formatting
+- Built-in database is checked FIRST before LLM, preventing hallucination
+- Graceful fallback: if a drug isn't found, the system says so honestly instead of guessing
+
+### 3. ❌ WhatsApp Broadcasting Not Working → ✅ FIXED
+**Root Cause:** API version mismatch (v21.0 in code vs v22.0 in Meta dashboard)
+
+**Fix Applied:**
+- Updated `whatsapp_service.py` to use API `v22.0`
+- Improved error extraction from Meta API responses
+- Updated `broadcast.js` with proper template handling
+- Pre-fills admin WhatsApp number `919824794027`
+- Supports both template broadcasts (works anytime) and custom text (24h window)
 
 ---
 
-**Built with ❤️ for healthcare accessibility in India**
+## 🌟 Key Features
 
-*Empowering patients with knowledge, one message at a time.*# MedRyxa
-# MedRyxa
+### 🤖 RAG-Based Drug Information System
+- **Accuracy-First Approach**: Built-in verified drug database checked before LLM
+- **15 Medications** with complete pharmacology data
+- **40+ Brand Name Aliases** (Dolo, Crocin, Ecosprin, etc.)
+- **Patient vs Student Modes**: Different detail levels
+  - Patient Mode: Practical usage, safety warnings, when to seek help
+  - Student Mode: Technical pharmacology, metabolism, half-life, mechanism
+- **Emergency Drug Flagging**: Quick access to critical emergency medications
+- **No Hallucination**: System honestly reports when it doesn't have info
+
+### 📱 WhatsApp Business API Integration
+- **Template Broadcasting**: Send pre-approved templates to multiple recipients
+- **Custom Text Messages**: Send within 24-hour conversation windows
+- **Medication Reminders**: Structured reminder messages
+- **Emergency Alerts**: Critical health alert broadcasting
+- **Hospital Directions**: Send directions via WhatsApp
+- **Ayushman/MAA Card Info**: Government health card hospital information
+
+### 🗺️ Health Grid Map
+- **Leaflet.js Interactive Map** with facility markers
+- **Hospital & Pharmacy Search** with distance calculation
+- **Ayushman Bharat Card** hospital filtering
+- **MAA Vatsalya Card** support
+- **Category Filtering**: Orthopaedic, Gynaecology, Multispeciality, etc.
+- **Location-Based**: Auto-detects user GPS position
+
+### 🔐 Authentication
+- **Login/Register** system with session management
+- **Admin Role**: Admin users see Broadcast button
+- **Demo Mode**: Works even when auth backend is down
+- **Default Admin**: `admin@lifexia.com` / `admin123`
+
+---
+
+## 📂 Project Structure
+
+```
+lifexia/
+├── backend/
+│   ├── __init__.py
+│   ├── app.py                    ← Main Flask application (FIXED)
+│   ├── config.py                 ← Environment configuration
+│   ├── requirements.txt          ← Python dependencies
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── auth_routes.py        ← Login/register endpoints
+│   │   ├── chat_routes.py        ← Chat API endpoints (FIXED - added /message)
+│   │   ├── history_routes.py     ← Chat history endpoints
+│   │   ├── map_routes.py         ← Hospital/pharmacy map API
+│   │   ├── upload_routes.py      ← File upload endpoints
+│   │   ├── webhook_routes.py     ← WhatsApp webhook handler
+│   │   └── whatsapp_routes.py    ← WhatsApp API endpoints
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── chat_store.py         ← In-memory conversation store
+│   │   ├── map_service.py        ← Hospital/pharmacy data service
+│   │   ├── rag_service.py        ← RAG + Drug Database (FIXED - no hallucination)
+│   │   └── whatsapp_service.py   ← WhatsApp Business API (FIXED - v22.0)
+│   └── utils/
+│       ├── __init__.py
+│       └── helpers.py
+├── frontend/
+│   ├── templates/
+│   │   ├── index.html            ← Main chat interface
+│   │   └── chat.html             ← Alternative chat page
+│   └── static/
+│       ├── css/
+│       │   └── styles.css        ← Glassmorphism UI styles
+│       ├── js/
+│       │   ├── main.js           ← App initialization (FIXED)
+│       │   ├── auth.js           ← Authentication logic (FIXED)
+│       │   ├── chat.js           ← Chat functionality (FIXED - correct endpoint)
+│       │   ├── broadcast.js      ← WhatsApp broadcast UI (FIXED)
+│       │   ├── map.js            ← Health Grid map logic
+│       │   └── upload.js         ← File upload handling
+│       └── images/
+│           └── Logo.jpg
+├── data/
+│   └── location.json             ← Hospital/pharmacy location data
+├── .env.example                  ← Environment template
+├── run.sh                        ← Startup script
+└── README.md                     ← This file
+```
+
+---
+
+## 📡 API Endpoints
+
+### Chat API (`/api/chat/`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/chat/init` | Initialize chat session |
+| POST | `/api/chat/message` | **Main chat endpoint** (used by index.html) |
+| POST | `/api/chat/query` | Alternative query endpoint (used by chat.html) |
+| POST | `/api/chat/drug-search` | Direct drug search |
+| GET | `/api/chat/emergency-drugs` | List emergency medications |
+| GET | `/api/chat/quick-info/<drug>` | Quick drug info |
+| GET | `/api/chat/history` | Get session chat history |
+| POST | `/api/chat/clear-history` | Clear chat history |
+
+### WhatsApp API (`/api/whatsapp/`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/whatsapp/send-message` | Send text message |
+| POST | `/api/whatsapp/send-template` | Send template message |
+| POST | `/api/whatsapp/broadcast` | **Broadcast to multiple numbers** |
+| POST | `/api/whatsapp/medication-reminder` | Send med reminder |
+| POST | `/api/whatsapp/emergency-alert` | Send emergency alert |
+| POST | `/api/whatsapp/hospital-directions` | Send hospital directions |
+| POST | `/api/whatsapp/ayushman-info` | Send Ayushman card info |
+| POST | `/api/whatsapp/send-location` | Send location pin |
+| GET | `/api/whatsapp/session-status/<phone>` | Check 24h window |
+
+### Map API (`/api/map/`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/map/locations` | Get all locations with filtering |
+
+### Auth API (`/api/auth/`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Login |
+| POST | `/api/auth/register` | Register |
+| POST | `/api/auth/verify` | Verify token |
+
+### History API (`/api/history/`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/history/<email>` | Get user's chat history |
+| GET | `/api/history/conversation/<id>` | Get conversation |
+| DELETE | `/api/history/delete/<id>` | Delete conversation |
+
+### Other
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Main chat interface |
+| GET | `/chat` | Alternative chat page |
+| GET | `/health` | Service health check |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Setup
+```bash
+python3 -m venv .venv
+source .venv/bin/activate   # Mac/Linux
+pip install -r backend/requirements.txt
+```
+
+### 2. Configure Environment
+```bash
+cp .env.example .env
+# Edit .env with your WhatsApp credentials
+```
+
+### 3. Run
+```bash
+python -m backend.app
+# OR
+bash run.sh
+```
+
+### 4. Access
+- **Main Interface**: http://localhost:5000/
+- **Alternative Chat**: http://localhost:5000/chat
+- **Health Check**: http://localhost:5000/health
+
+### Default Login
+- **Email**: `admin@lifexia.com`
+- **Password**: `admin123`
+
+---
+
+## 📱 WhatsApp Configuration
+
+Your WhatsApp Business API credentials (from Meta Developer Console):
+
+| Setting | Value |
+|---------|-------|
+| App ID | 1226541692966693 |
+| Phone Number ID | 100151100304141 4 |
+| Business Account ID | 155128022409639 |
+| Admin Number | +91 98247 94027 |
+| API Version | v22.0 |
+
+### Broadcasting
+1. Login as admin (`admin@lifexia.com`)
+2. Click the **Broadcast** button in header
+3. Select template (e.g., `hello_world`)
+4. Enter recipient numbers (comma-separated, with country code)
+5. Click **Send Broadcast**
+
+---
+
+## 💊 Supported Drugs (Built-in Verified Database)
+
+| Drug | Category | Emergency |
+|------|----------|-----------|
+| Paracetamol (Dolo, Crocin, Calpol) | Analgesic/Antipyretic | ✅ |
+| Aspirin (Ecosprin, Disprin) | NSAID/Antiplatelet | ✅ |
+| Ibuprofen (Brufen, Combiflam) | NSAID | ✅ |
+| Amoxicillin (Augmentin, Mox) | Antibiotic | ✅ |
+| Metformin (Glycomet, Glucophage) | Antidiabetic | ❌ |
+| Amlodipine (Stamlo, Norvasc) | Calcium Channel Blocker | ❌ |
+| Omeprazole (Omez, Prilosec) | PPI | ❌ |
+| Cetirizine (Zyrtec, Alerid) | Antihistamine | ❌ |
+| Atorvastatin (Lipitor, Atorva) | Statin | ❌ |
+| Epinephrine (Adrenaline, EpiPen) | Emergency Drug | ✅ |
+| Diazepam (Valium, Calmpose) | Benzodiazepine | ✅ |
+| Salbutamol (Asthalin, Ventolin) | Bronchodilator | ✅ |
+| Ciprofloxacin (Ciplox, Cipro) | Fluoroquinolone | ❌ |
+| Losartan (Repace, Cozaar) | ARB | ❌ |
+| Insulin (Lantus, NovoRapid, Humulin) | Antidiabetic Hormone | ✅ |
+
+---
+
+## 🔮 Recommended Next Steps
+
+1. **Add more drugs** to the built-in database in `rag_service.py`
+2. **Run data ingestion** (`python backend/services/ingest_data.py`) with your PDF drug documents for full RAG
+3. **Create custom WhatsApp templates** in Meta Business Manager for branded broadcasts
+4. **Deploy to production** with gunicorn + nginx
+5. **Add Redis** for session management and user session tracking
+6. **Integrate OCR** for prescription image analysis
+7. **Add user registration** with database-backed auth
+
+---
+
+*Built with ❤️ for patient safety — LIFEXIA prioritizes accuracy over speed.*

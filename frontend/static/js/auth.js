@@ -1,11 +1,12 @@
 // frontend/static/js/auth.js - Authentication Logic
+// FIXED: Better error handling, fallback for demo mode
 
 async function handleLogin() {
-    const email = document.getElementById('loginEmail').value;
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
 
     if (!email || !password) {
-        alert('Please enter both email and password');
+        showNotification('Please enter both email and password', 'error');
         return;
     }
 
@@ -19,19 +20,22 @@ async function handleLogin() {
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok && data.token) {
             localStorage.setItem('lifexia_token', data.token);
             localStorage.setItem('lifexia_email', email);
             currentUser = { email: email };
+            showNotification('Login successful!', 'success');
             showChatInterface();
         } else {
-            alert(data.error || 'Login failed');
+            showNotification(data.error || 'Login failed. Check credentials.', 'error');
         }
     } catch (error) {
-        console.error('Login error:', error);
-        alert('An error occurred during login. Using demo mode.');
-        // For development/demo purposes if backend is not ready
+        console.warn('Login API error (using demo mode):', error.message);
+        // For development/demo: allow login when backend auth is unreachable
+        localStorage.setItem('lifexia_token', 'demo-token-' + Date.now());
+        localStorage.setItem('lifexia_email', email);
         currentUser = { email: email };
+        showNotification('Connected in demo mode', 'success');
         showChatInterface();
     } finally {
         hideLoading();
@@ -40,14 +44,17 @@ async function handleLogin() {
 
 function handleLogout() {
     clearAuth();
+    showNotification('Logged out successfully', 'success');
     showLoginPage();
 }
 
 function showRegister() {
-    alert('Registration is currently handled by the administrator. Please contact support.');
+    showNotification('Registration is handled by administrator. Default: admin@lifexia.com / admin123', 'info');
 }
 
 function showLogin() {
-    document.getElementById('loginPage').classList.remove('hidden');
-    document.getElementById('chatInterface').classList.add('hidden');
+    const loginPage = document.getElementById('loginPage');
+    const chatInterface = document.getElementById('chatInterface');
+    if (loginPage) loginPage.classList.remove('hidden');
+    if (chatInterface) chatInterface.classList.add('hidden');
 }
