@@ -1,3 +1,7 @@
+"""
+WhatsApp Routes for LIFEXIA
+API endpoints for sending messages, reminders, alerts, and broadcasts
+"""
 
 from flask import Blueprint, request, jsonify, current_app
 import logging
@@ -6,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
+
 @whatsapp_bp.route('/send-message', methods=['POST'])
 def send_message():
     """Send text message to user"""
@@ -13,31 +18,58 @@ def send_message():
         data = request.json
         to_number = data.get('to_number')
         message = data.get('message')
-        
+
         if not to_number or not message:
             return jsonify({
                 'success': False,
                 'error': 'Phone number and message required'
             }), 400
-        
+
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
-        
+
         if not whatsapp_service:
             return jsonify({
                 'success': False,
-                'error': 'WhatsApp service unavailable'
+                'error': 'WhatsApp service not configured. Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env'
             }), 503
-        
+
         result = whatsapp_service.send_text_message(to_number, message)
-        
         return jsonify(result)
-        
+
     except Exception as e:
         logger.error(f"Send message error: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@whatsapp_bp.route('/send-template', methods=['POST'])
+def send_template():
+    """Send a pre-approved WhatsApp template message"""
+    try:
+        data = request.json
+        to_number = data.get('to_number')
+        template_name = data.get('template_name')
+        language = data.get('language', 'en')
+        components = data.get('components')
+
+        if not to_number or not template_name:
+            return jsonify({
+                'success': False,
+                'error': 'Phone number and template name required'
+            }), 400
+
+        whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
+        result = whatsapp_service.send_template_message(
+            to_number, template_name, language, components
+        )
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Template send error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @whatsapp_bp.route('/medication-reminder', methods=['POST'])
 def send_medication_reminder():
@@ -48,17 +80,21 @@ def send_medication_reminder():
         medication = data.get('medication_name')
         dosage = data.get('dosage')
         time = data.get('time')
-        
+
+        if not to_number or not medication:
+            return jsonify({'success': False, 'error': 'Number and medication name required'}), 400
+
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
-        result = whatsapp_service.send_medication_reminder(
-            to_number, medication, dosage, time
-        )
-        
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
+        result = whatsapp_service.send_medication_reminder(to_number, medication, dosage, time)
         return jsonify(result)
-        
+
     except Exception as e:
         logger.error(f"Medication reminder error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @whatsapp_bp.route('/emergency-alert', methods=['POST'])
 def send_emergency_alert():
@@ -69,17 +105,18 @@ def send_emergency_alert():
         alert_type = data.get('alert_type')
         details = data.get('details')
         location = data.get('location')
-        
+
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
-        result = whatsapp_service.send_emergency_alert(
-            to_number, alert_type, details, location
-        )
-        
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
+        result = whatsapp_service.send_emergency_alert(to_number, alert_type, details, location)
         return jsonify(result)
-        
+
     except Exception as e:
         logger.error(f"Emergency alert error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @whatsapp_bp.route('/hospital-directions', methods=['POST'])
 def send_hospital_directions():
@@ -92,17 +129,20 @@ def send_hospital_directions():
         maps_link = data.get('google_maps_link')
         distance = data.get('distance', 'N/A')
         eta = data.get('eta', 'N/A')
-        
+
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
         result = whatsapp_service.send_hospital_directions(
             to_number, hospital_name, address, maps_link, distance, eta
         )
-        
         return jsonify(result)
-        
+
     except Exception as e:
         logger.error(f"Directions error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @whatsapp_bp.route('/ayushman-info', methods=['POST'])
 def send_ayushman_info():
@@ -112,281 +152,178 @@ def send_ayushman_info():
         to_number = data.get('to_number')
         hospital_name = data.get('hospital_name')
         services = data.get('services', [])
-        
+
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
-        result = whatsapp_service.send_ayushman_card_info(
-            to_number, hospital_name, services
-        )
-        
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
+        result = whatsapp_service.send_ayushman_card_info(to_number, hospital_name, services)
         return jsonify(result)
-        
+
     except Exception as e:
         logger.error(f"Ayushman info error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @whatsapp_bp.route('/broadcast', methods=['POST'])
 def broadcast_alert():
-    """Broadcast alert to multiple users"""
+    """
+    Broadcast alert to multiple users.
+    Supports both template messages and custom text messages.
+    
+    Payload options:
+    1. Template broadcast:
+       { "numbers": [...], "template_name": "hello_world", "components": [...] }
+    2. Custom text broadcast:
+       { "numbers": [...], "message": "Your message here" }
+    3. Legacy format:
+       { "phone_numbers": [...], "message": "..." }
+    """
     try:
         data = request.json
-        phone_numbers = data.get('phone_numbers', [])
+        # Support both 'numbers' and 'phone_numbers' keys
+        phone_numbers = data.get('numbers') or data.get('phone_numbers', [])
+        template_name = data.get('template_name')
+        components = data.get('components')
         message = data.get('message')
-        
-        if not phone_numbers or not message:
+
+        if not phone_numbers:
             return jsonify({
                 'success': False,
-                'error': 'Phone numbers and message required'
+                'error': 'Phone numbers required'
             }), 400
-        
+
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
-        result = whatsapp_service.broadcast_alert(phone_numbers, message)
-        
+        if not whatsapp_service:
+            return jsonify({
+                'success': False,
+                'error': 'WhatsApp service not configured. Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env'
+            }), 503
+
+        results = {
+            "total": len(phone_numbers),
+            "sent": 0,
+            "failed": 0,
+            "errors": [],
+            "details": []
+        }
+
+        for number in phone_numbers:
+            try:
+                if template_name and template_name != 'custom_text':
+                    # Send template message (works outside 24h window)
+                    result = whatsapp_service.send_template_message(
+                        number, template_name, 'en', components
+                    )
+                elif message:
+                    # Send custom text (only within 24h window)
+                    result = whatsapp_service.send_text_message(number, message)
+                else:
+                    result = {'success': False, 'error': 'No message or template specified'}
+
+                if result.get('success'):
+                    results['sent'] += 1
+                    results['details'].append({
+                        'number': number,
+                        'status': 'sent',
+                        'message_id': result.get('message_id')
+                    })
+                else:
+                    results['failed'] += 1
+                    results['errors'].append({
+                        'number': number,
+                        'error': result.get('error', 'Unknown error'),
+                        'error_code': result.get('error_code')
+                    })
+                    results['details'].append({
+                        'number': number,
+                        'status': 'failed',
+                        'error': result.get('error')
+                    })
+
+            except Exception as e:
+                results['failed'] += 1
+                results['errors'].append({
+                    'number': number,
+                    'error': str(e)
+                })
+
+        logger.info(f"Broadcast complete: {results['sent']}/{results['total']} sent")
+
         return jsonify({
-            'success': True,
-            'broadcast_result': result
+            'success': results['sent'] > 0,
+            'broadcast_result': results
         })
-        
+
     except Exception as e:
-        logger.error(f"Broadcast error: {e}")
+        logger.error(f"Broadcast error: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@whatsapp_bp.route('/send-location', methods=['POST'])
+def send_location():
+    """Send location pin via WhatsApp"""
+    try:
+        data = request.json
+        to_number = data.get('to_number')
+        lat = data.get('latitude') or data.get('lat')
+        lng = data.get('longitude') or data.get('lng')
+        name = data.get('name', '')
+        address = data.get('address', '')
+
+        if not to_number or not lat or not lng:
+            return jsonify({'success': False, 'error': 'Number and coordinates required'}), 400
+
+        whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
+        result = whatsapp_service.send_location_message(to_number, lat, lng, name, address)
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Send location error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @whatsapp_bp.route('/session-status/<phone_number>', methods=['GET'])
 def get_session_status(phone_number):
     """Check WhatsApp session status for a number"""
     try:
         whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
         status = whatsapp_service.get_session_status(phone_number)
-        
         return jsonify({
             'success': True,
             'status': status
         })
-        
+
     except Exception as e:
         logger.error(f"Session status error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-EOFWA
-cat > backend/routes/webhook_routes.py << 'EOFWH'
-"""
-Webhook Routes for LIFEXIA WhatsApp Integration
-Handles incoming messages from WhatsApp users
-"""
 
-from flask import Blueprint, request, jsonify, current_app
-import logging
 
-logger = logging.getLogger(__name__)
-
-webhook_bp = Blueprint('webhook', __name__)
-whatsapp_service_ref = None
-
-VERIFY_TOKEN = "lifexia_webhook_verify_2024"
-
-def init_webhook_service(service):
-    """Initialize WhatsApp service reference"""
-    global whatsapp_service_ref
-    whatsapp_service_ref = service
-    logger.info("Webhook service initialized")
-
-@webhook_bp.route('/webhook', methods=['GET'])
-def verify_webhook():
-    """Verify webhook with Meta"""
-    mode = request.args.get('hub.mode')
-    token = request.args.get('hub.verify_token')
-    challenge = request.args.get('hub.challenge')
-    
-    if mode and token:
-        if mode == 'subscribe' and token == VERIFY_TOKEN:
-            logger.info("✅ Webhook verified successfully")
-            return challenge, 200
-        else:
-            logger.warning("❌ Webhook verification failed")
-            return "Forbidden", 403
-    
-    return "Not Found", 404
-
-@webhook_bp.route('/webhook', methods=['POST'])
-def handle_incoming_message():
-    """Handle incoming WhatsApp messages"""
+@whatsapp_bp.route('/interactive-buttons', methods=['POST'])
+def send_interactive_buttons():
+    """Send interactive button message"""
     try:
         data = request.json
-        logger.info(f"📨 Webhook received: {data}")
-        
-        if 'entry' in data:
-            for entry in data['entry']:
-                for change in entry.get('changes', []):
-                    value = change.get('value', {})
-                    
-                    if 'messages' in value:
-                        for message in value['messages']:
-                            from_number = message.get('from')
-                            message_type = message.get('type')
-                            
-                            # Record user message (opens 24h window)
-                            if whatsapp_service_ref and from_number:
-                                whatsapp_service_ref.record_user_message(from_number)
-                            
-                            # Extract message content
-                            content = None
-                            if message_type == 'text':
-                                content = message.get('text', {}).get('body')
-                            
-                            if content:
-                                logger.info(f"📝 Message from {from_number}: {content}")
-                                
-                                # Process with chatbot
-                                response = process_user_query(content, from_number)
-                                
-                                # Send response
-                                if whatsapp_service_ref and response:
-                                    whatsapp_service_ref.send_text_message(from_number, response)
-        
-        return jsonify({'status': 'success'}), 200
-        
+        to_number = data.get('to_number')
+        body_text = data.get('body_text')
+        buttons = data.get('buttons', [])
+
+        if not to_number or not body_text or not buttons:
+            return jsonify({'success': False, 'error': 'Number, body text, and buttons required'}), 400
+
+        whatsapp_service = current_app.config.get('WHATSAPP_SERVICE')
+        if not whatsapp_service:
+            return jsonify({'success': False, 'error': 'WhatsApp service unavailable'}), 503
+
+        result = whatsapp_service.send_interactive_button_message(to_number, body_text, buttons)
+        return jsonify(result)
+
     except Exception as e:
-        logger.error(f"Webhook error: {e}", exc_info=True)
-        return jsonify({'status': 'error'}), 500
-
-def process_user_query(query: str, phone_number: str) -> str:
-    """Process user query and generate response"""
-    try:
-        # Get RAG service for drug information
-        rag_service = current_app.config.get('RAG_SERVICE')
-        
-        if rag_service:
-            response = rag_service.query(query, user_type='patient')
-            return response
-        else:
-            return """Hello! I'm LIFEXIA, your healthcare assistant.
-
-I can help you with:
-• Medication information
-• Nearby hospitals & pharmacies
-• Emergency assistance
-
-How can I help you today?"""
-            
-    except Exception as e:
-        logger.error(f"Query processing error: {e}")
-        return "I apologize, but I'm having trouble processing your request. Please try again or contact emergency services if urgent."
-EOFWH
-cat > backend/routes/auth_routes.py << 'EOFAU'
-"""
-Authentication Routes for LIFEXIA
-Simple session-based authentication
-"""
-
-from flask import Blueprint, request, jsonify, session
-from datetime import datetime
-import logging
-import uuid
-
-logger = logging.getLogger(__name__)
-
-auth_bp = Blueprint('auth', __name__)
-
-# Simple in-memory user storage (use database in production)
-users_db = {}
-
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    """Simple login/session creation"""
-    try:
-        data = request.json
-        phone_number = data.get('phone_number')
-        name = data.get('name', 'User')
-        
-        if not phone_number:
-            return jsonify({
-                'success': False,
-                'error': 'Phone number required'
-            }), 400
-        
-        # Create or get user
-        user_id = phone_number
-        if user_id not in users_db:
-            users_db[user_id] = {
-                'id': user_id,
-                'name': name,
-                'phone': phone_number,
-                'created_at': datetime.now().isoformat(),
-                'preferences': {
-                    'user_type': 'patient'
-                }
-            }
-        
-        # Create session
-        session['user_id'] = user_id
-        session['logged_in'] = True
-        session['user_name'] = users_db[user_id]['name']
-        
-        return jsonify({
-            'success': True,
-            'user': users_db[user_id],
-            'session_id': request.cookies.get('session')
-        })
-        
-    except Exception as e:
-        logger.error(f"Login error: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Login failed'
-        }), 500
-
-@auth_bp.route('/logout', methods=['POST'])
-def logout():
-    """Logout user"""
-    session.clear()
-    return jsonify({
-        'success': True,
-        'message': 'Logged out successfully'
-    })
-
-@auth_bp.route('/session', methods=['GET'])
-def get_session():
-    """Get current session info"""
-    if session.get('logged_in'):
-        user_id = session.get('user_id')
-        return jsonify({
-            'success': True,
-            'logged_in': True,
-            'user': users_db.get(user_id, {})
-        })
-    else:
-        return jsonify({
-            'success': True,
-            'logged_in': False
-        })
-
-@auth_bp.route('/preferences', methods=['POST'])
-def update_preferences():
-    """Update user preferences"""
-    try:
-        if not session.get('logged_in'):
-            return jsonify({
-                'success': False,
-                'error': 'Not logged in'
-            }), 401
-        
-        data = request.json
-        user_id = session.get('user_id')
-        
-        if user_id in users_db:
-            users_db[user_id]['preferences'].update(data)
-            
-            return jsonify({
-                'success': True,
-                'preferences': users_db[user_id]['preferences']
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'User not found'
-            }), 404
-            
-    except Exception as e:
-        logger.error(f"Preferences update error: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Update failed'
-        }), 500
+        logger.error(f"Interactive buttons error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500

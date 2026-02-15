@@ -7,7 +7,7 @@ from flask import Flask, render_template, jsonify, request, session
 from flask_cors import CORS
 from flask_session import Session
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 
 # Configure logging
@@ -42,16 +42,16 @@ CORS(app, resources={
 Session(app)
 
 # Import services
-from services.rag_service import RAGService
-from services.whatsapp_service import WhatsAppService
-from services.map_service import MapService
+from backend.services.rag_service import RAGService
+from backend.services.whatsapp_service import WhatsAppService
+from backend.services.map_service import MapService
 
 # Import routes
-from routes.chat_routes import chat_bp
-from routes.whatsapp_routes import whatsapp_bp
-from routes.webhook_routes import webhook_bp, init_webhook_service
-from routes.map_routes import map_bp
-from routes.auth_routes import auth_bp
+from backend.routes.chat_routes import chat_bp
+from backend.routes.whatsapp_routes import whatsapp_bp
+from backend.routes.webhook_routes import webhook_bp, init_webhook_service
+from backend.routes.map_routes import map_bp
+from backend.routes.auth_routes import auth_bp
 
 # Initialize services
 try:

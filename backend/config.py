@@ -18,7 +18,7 @@ class Config:
     ADMIN_WHATSAPP_NUMBER = os.getenv('ADMIN_WHATSAPP_NUMBER')
     
     LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'Qwen/Qwen2.5-3B-Instruct')
-    USE_GPU = os.getenv('USE_GPU', 'True').lower() == 'true'
+    USE_GPU = os.getenv('USE_GPU', 'False').lower() == 'true'
     
     LOG_FILE = 'logs/app.log'
     ERROR_LOG_FILE = 'logs/error.log'

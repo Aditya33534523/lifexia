@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeXia - Intelligent Pharmacy Assistant</title>
+    <title>LIFEXIA - AI Health Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/lib/marked.umd.min.js"></script>
 
@@ -13,9 +13,6 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- Leaflet CSS for Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 
 <body class="gradient-bg min-h-screen">
@@ -27,8 +24,8 @@
                     <div class="inline-block p-2 glassmorphism rounded-full mb-4">
                         <img src="/static/images/Logo.jpg" class="w-16 h-16 rounded-full object-cover">
                     </div>
-                    <h1 class="text-3xl font-bold text-white mb-2">LifeXia</h1>
-                    <p class="text-white/80">Your Intelligent Pharmacy Assistant</p>
+                    <h1 class="text-3xl font-bold text-white mb-2">LIFEXIA</h1>
+                    <p class="text-white/80">AI Health Assistant</p>
                 </div>
 
                 <div class="space-y-6">
@@ -128,8 +125,8 @@
                                 <img src="/static/images/Logo.jpg" class="w-8 h-8 rounded-lg object-cover">
                             </div>
                             <div>
-                                <h1 class="text-white font-semibold">LifeXia Assistant</h1>
-                                <p class="text-white/70 text-xs">AI-Powered Pharmacy Support</p>
+                                <h1 class="text-white font-semibold">LIFEXIA Assistant</h1>
+                                <p class="text-white/70 text-xs">AI-Powered Health Support</p>
                             </div>
                         </div>
                     </div>
@@ -143,7 +140,7 @@
                                     d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
                                 </path>
                             </svg>
-                            <span class="hidden sm:inline">Health Map</span>
+                            <span class="hidden sm:inline">Health Grid</span>
                         </button>
 
                         <button id="adminAlertBtn" onclick="showBroadcastModal()"
@@ -153,7 +150,7 @@
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
                                 </path>
                             </svg>
-                            <span class="hidden sm:inline">BroadCast Alert</span>
+                            <span class="hidden sm:inline">Broadcast</span>
                         </button>
                         <button onclick="handleLogout()"
                             class="flex items-center gap-2 px-4 py-2 glassmorphism-strong hover:bg-white/30 text-white rounded-xl transition-all">
@@ -170,7 +167,6 @@
 
             <!-- Messages Area -->
             <div id="messagesArea" class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll">
-                <!-- Messages will be dynamically added here -->
             </div>
 
             <!-- Typing Indicator -->
@@ -253,43 +249,54 @@
         </div>
     </div>
 
-    <!-- Enhanced Map Modal -->
-    <div id="mapModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-50">
+    <!-- ═══════════ HEALTH GRID MAP MODAL ═══════════ -->
+    <div id="mapModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50">
         <div class="h-full flex flex-col">
-            <!-- Header -->
-            <div class="glassmorphism-strong border-b border-white/10 px-6 py-4">
+            <!-- Health Grid Header -->
+            <div class="health-grid-header border-b border-cyan-900/50 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="p-2.5 bg-gradient-to-br from-cyan-500/30 to-blue-600/30 rounded-xl border border-cyan-500/30">
+                                <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
                                     </path>
                                 </svg>
                             </div>
                             <div>
-                                <h2 class="text-white font-black text-xl uppercase tracking-wider">Health Grid</h2>
-                                <p class="text-white/60 text-[10px] uppercase tracking-widest font-bold">Verified
-                                    Infrastructure</p>
+                                <h2 class="text-white font-black text-xl tracking-wider">HEALTH GRID</h2>
+                                <p class="text-cyan-400/70 text-[10px] uppercase tracking-[0.25em] font-bold">Verified Infrastructure</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-3">
+                        <!-- All Resources Filter -->
+                        <select id="mapCategoryFilter" onchange="filterMapCategory(this.value)"
+                            class="px-4 py-2.5 bg-slate-800/80 border border-cyan-900/50 rounded-xl text-white text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                            <option value="ALL RESOURCES">All Resources</option>
+                            <option value="Hospital">Hospitals</option>
+                            <option value="Pharmacy">Pharmacies</option>
+                            <option value="Orthopaedic">Orthopaedic</option>
+                            <option value="Gynaecology">Gynaecology</option>
+                            <option value="Multispeciality">Multispeciality</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Oncology">Oncology</option>
+                        </select>
+
                         <button onclick="refreshSearch()"
-                            class="flex items-center gap-2 px-4 py-2 glassmorphism hover:bg-white/20 text-white rounded-xl transition-all">
+                            class="flex items-center gap-2 px-4 py-2.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded-xl transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                                 </path>
                             </svg>
-                            <span class="text-[10px] uppercase tracking-widest font-bold hidden sm:inline">Refresh
-                                Search</span>
+                            <span class="text-[10px] uppercase tracking-widest font-bold hidden sm:inline">Refresh Search</span>
                         </button>
 
                         <button onclick="closeMapModal()"
-                            class="p-2 glassmorphism hover:bg-white/20 text-white rounded-xl transition-all">
+                            class="p-2.5 bg-slate-800/80 hover:bg-red-500/30 border border-white/10 hover:border-red-500/30 text-white/70 hover:text-red-400 rounded-xl transition-all">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12"></path>
@@ -301,31 +308,24 @@
 
             <!-- Main Content -->
             <div class="flex-1 flex overflow-hidden">
-                <!-- Sidebar -->
-                <div class="w-80 glassmorphism border-r border-white/10 flex flex-col">
-                    <!-- Filter Section -->
-                    <div class="p-4 border-b border-white/10">
-                        <div class="mb-4">
-                            <label class="block text-white/80 text-[10px] uppercase tracking-widest font-bold mb-2">
-                                Resource Filter
-                            </label>
-                            <select id="mapCategoryFilter" onchange="filterMapCategory(this.value)"
-                                class="w-full px-4 py-3 glassmorphism rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 bg-slate-800/50 font-semibold uppercase tracking-wide">
-                                <option value="ALL RESOURCES">All Resources</option>
-                                <option value="Hospital">Hospitals</option>
-                                <option value="Pharmacy">Pharmacies</option>
-                                <option value="Orthopaedic">Orthopaedic</option>
-                                <option value="Gynaecology">Gynaecology</option>
-                                <option value="Multispeciality">Multispeciality</option>
-                                <option value="Pediatrics">Pediatrics</option>
-                            </select>
-                        </div>
-
+                <!-- Sidebar - Nearby Nodes -->
+                <div class="w-80 health-grid-sidebar border-r border-cyan-900/30 flex flex-col">
+                    <!-- Status Bar -->
+                    <div class="px-4 py-3 border-b border-cyan-900/30">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span class="text-white/60 text-[10px] uppercase tracking-widest font-bold">Nearby Nodes</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
                                 <span id="locationCount"
-                                    class="text-white/80 text-[10px] uppercase tracking-widest font-bold">
+                                    class="text-cyan-400/80 text-[10px] uppercase tracking-wider font-bold">
                                     Loading...
                                 </span>
                             </div>
@@ -333,23 +333,20 @@
                     </div>
 
                     <!-- Locations List -->
-                    <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" id="locationsList">
-                        <!-- Locations will be dynamically inserted here -->
+                    <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar" id="locationsList">
                     </div>
 
                     <!-- Legend -->
-                    <div class="p-4 border-t border-white/10">
-                        <p class="text-white/60 text-[9px] uppercase tracking-widest font-bold mb-2">Card Acceptance</p>
-                        <div class="flex gap-3">
+                    <div class="px-4 py-3 border-t border-cyan-900/30">
+                        <p class="text-white/40 text-[9px] uppercase tracking-widest font-bold mb-2">Card Acceptance</p>
+                        <div class="flex gap-4">
                             <div class="flex items-center gap-1.5">
                                 <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                <span
-                                    class="text-white/70 text-[9px] uppercase tracking-wider font-bold">Ayushman</span>
+                                <span class="text-white/60 text-[9px] uppercase tracking-wider font-bold">Ayushman Bharat</span>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                                <span class="text-white/70 text-[9px] uppercase tracking-wider font-bold">Maa
-                                    Amrutam</span>
+                                <span class="text-white/60 text-[9px] uppercase tracking-wider font-bold">MAA Vatsalya</span>
                             </div>
                         </div>
                     </div>
@@ -358,36 +355,30 @@
                 <!-- Map Container -->
                 <div class="flex-1 relative">
                     <div id="map" class="w-full h-full"></div>
-
-                    <!-- Map Controls Overlay -->
-                    <div class="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
-                        <button onclick="map && map.zoomIn()"
-                            class="p-2 glassmorphism-strong hover:bg-white/30 text-white rounded-lg transition-all shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4"></path>
-                            </svg>
-                        </button>
-                        <button onclick="map && map.zoomOut()"
-                            class="p-2 glassmorphism-strong hover:bg-white/30 text-white rounded-lg transition-all shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4">
-                                </path>
-                            </svg>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Broadcast Modal -->
+    <!-- ═══════════ BROADCAST MODAL ═══════════ -->
     <div id="broadcastModal"
-        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="w-full max-w-lg glassmorphism-strong rounded-3xl shadow-2xl overflow-hidden">
-            <div class="glassmorphism-strong p-4 flex justify-between items-center border-b border-white/20">
-                <h2 class="text-white font-semibold text-xl">WhatsApp Broadcast Alert</h2>
-                <button onclick="closeBroadcastModal()" class="text-white/80 hover:text-white transition-all">
+            <div class="bg-gradient-to-r from-red-500/30 to-orange-500/20 p-5 flex justify-between items-center border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-red-500/30 rounded-xl">
+                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-white font-bold text-lg">WhatsApp Broadcast</h2>
+                        <p class="text-white/50 text-xs">Send alerts to multiple recipients</p>
+                    </div>
+                </div>
+                <button onclick="closeBroadcastModal()" class="text-white/60 hover:text-white transition-all p-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
@@ -397,9 +388,9 @@
 
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-white/90 text-sm font-medium mb-2">Select Template</label>
+                    <label class="block text-white/90 text-xs font-bold uppercase tracking-wider mb-2">Message Template</label>
                     <select id="templateSelector" onchange="handleTemplateChange()"
-                        class="w-full px-4 py-3 glassmorphism rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 bg-slate-800">
+                        class="w-full px-4 py-3 glassmorphism rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 bg-slate-800/80">
                         <option value="hello_world">General Welcome (hello_world)</option>
                         <option value="pharmacy_alert">Emergency Alert (pharmacy_alert)</option>
                         <option value="med_reminder">Medication Reminder (med_reminder)</option>
@@ -410,31 +401,32 @@
                 </div>
 
                 <div>
-                    <label class="block text-white/90 text-sm font-medium mb-2">Recipient Numbers (comma
-                        separated)</label>
+                    <label class="block text-white/90 text-xs font-bold uppercase tracking-wider mb-2">Recipients (comma separated)</label>
                     <textarea id="broadcastNumbers" rows="2"
-                        class="w-full px-4 py-3 glassmorphism rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        class="w-full px-4 py-3 glassmorphism rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-red-500/30 text-sm"
                         placeholder="919824794027, 918888888888"></textarea>
-                    <p class="text-xs text-white/50 mt-1">Note: Include country code without '+' (e.g., 91... for India)
-                    </p>
+                    <p class="text-[10px] text-white/40 mt-1">Include country code without '+' (e.g., 91... for India)</p>
                 </div>
 
                 <div id="templateVariablesContainer" class="space-y-3 hidden">
-                    <!-- Dynamic variable inputs will be inserted here -->
                 </div>
 
                 <div id="customMessageContainer">
-                    <label class="block text-white/90 text-sm font-medium mb-2">Message</label>
+                    <label class="block text-white/90 text-xs font-bold uppercase tracking-wider mb-2">Message Content</label>
                     <textarea id="broadcastMessage" rows="4"
-                        class="w-full px-4 py-3 glassmorphism rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
-                        placeholder="Type your alert message here..."></textarea>
+                        class="w-full px-4 py-3 glassmorphism rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-red-500/30 text-sm"
+                        placeholder="Type your broadcast message here..."></textarea>
                 </div>
 
                 <div id="broadcastStatus" class="text-sm"></div>
 
                 <div class="flex gap-3">
                     <button onclick="handleBroadcast()"
-                        class="flex-1 glassmorphism-strong bg-red-500/50 hover:bg-red-500/70 text-white font-semibold py-3 rounded-xl transition-all">
+                        class="flex-1 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
                         Send Broadcast
                     </button>
                     <button onclick="closeBroadcastModal()"
@@ -446,7 +438,7 @@
         </div>
     </div>
 
-    <!-- WhatsApp QR Code Modal -->
+    <!-- ═══════════ WHATSAPP QR MODAL ═══════════ -->
     <div id="whatsappModal"
         class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
         <div class="glassmorphism-strong rounded-3xl p-8 max-w-sm w-full text-center relative shadow-2xl">
@@ -465,19 +457,25 @@
                             d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                     </svg>
                 </div>
-                <h3 class="text-white font-bold text-xl mb-1">Join LifeXia on WhatsApp</h3>
-                <p class="text-white/60 text-sm">Scan the QR code to start chatting</p>
+                <h3 class="text-white font-bold text-xl mb-1">Join LIFEXIA on WhatsApp</h3>
+                <p class="text-white/60 text-sm">Scan the QR code to get started</p>
             </div>
 
             <div class="bg-white p-4 rounded-xl inline-block mb-6">
-                <!-- Replace with your actual WhatsApp API link or number -->
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://wa.me/15551639038"
                     alt="WhatsApp QR Code" class="w-48 h-48">
             </div>
 
-            <p class="text-white/50 text-xs">
-                Or add manually: <span class="font-mono text-white/80">+1 555 163 9038</span>
-            </p>
+            <div class="space-y-3">
+                <p class="text-white/50 text-xs">
+                    Or add manually: <span class="font-mono text-white/80">+1 555 163 9038</span>
+                </p>
+                <div class="text-white/40 text-[10px] leading-relaxed">
+                    <p class="font-bold text-white/60 mb-1">WhatsApp Chatbot Features:</p>
+                    <p>Drug Info | Nearby Hospitals | Emergency Help</p>
+                    <p>Medication Reminders | Ayushman Card Hospitals</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -490,7 +488,8 @@
         </div>
     </div>
 
-    <!-- Leaflet JavaScript -->
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] space-y-2"></div>
 
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

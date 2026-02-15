@@ -1,16 +1,33 @@
 import os
 from pathlib import Path
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
-from langchain_community.vectorstores import Chroma
-from langchain_classic.chains.retrieval_qa.base import RetrievalQA
-from langchain_core.prompts import PromptTemplate
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-import torch
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Try to import ML dependencies - gracefully handle if not available
+try:
+    from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
+    from langchain_community.vectorstores import Chroma
+    from langchain_core.prompts import PromptTemplate
+    from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+    import torch
+    ML_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"ML dependencies not available: {e}. RAG service will run in fallback mode.")
+    ML_AVAILABLE = False
 
 class RAGService:
     def __init__(self):
-        BASE_DIR = Path(__file__).resolve().parent.parent.parent
-        PERSIST_DIR = os.path.join(BASE_DIR, "backend", "instance", "vector_db")
+        if not ML_AVAILABLE:
+            logger.warning("RAG Service running in fallback mode (no ML dependencies)")
+            self.vector_store = None
+            self.llm = None
+            self.template = None
+            self.embeddings = None
+            return
+
+        BASE_DIR = Path(__file__).resolve().parent
+        PERSIST_DIR = os.path.join(BASE_DIR, "instance", "vector_db")
         
         print("Initializing RAG Service...")
         
@@ -31,7 +48,7 @@ class RAGService:
             self.vector_store = None
 
         # 3. Load LLM
-        model_name = os.getenv("LLM_MODEL_NAME", "HuggingFaceTB/SmolLM-135M-Instruct")
+        model_name = os.getenv("LLM_MODEL_NAME", "Qwen/Qwen2.5-3B-Instruct")
         use_gpu = os.getenv("USE_GPU", "False").lower() == "true"
         
         print(f"Loading LLM: {model_name}...")
@@ -39,8 +56,8 @@ class RAGService:
         try:
             tokenizer = AutoTokenizer.from_pretrained(model_name)
             
-            # For 4GB RAM, we prioritize CPU and float32 if no GPU
-            # SmolLM-135M is small enough to fit comfortably
+            # For systems with adequate RAM (12GB+) or GPU
+            # Qwen2.5-3B provides excellent medical Q&A quality
             if use_gpu and torch.cuda.is_available():
                 device = "cuda"
                 torch_dtype = torch.float16
@@ -78,7 +95,7 @@ class RAGService:
 
         # 4. Create QA Chain
         if self.llm:
-            # SmolLM uses ChatML-like format
+            # Qwen 2.5 uses ChatML format with <|im_start|> and <|im_end|>
             template = """<|im_start|>system
 You are LifeXia, an intelligent pharmacy assistant. Provide a helpful, professional, and accurate answer.
 {context_msg}
@@ -86,17 +103,18 @@ You are LifeXia, an intelligent pharmacy assistant. Provide a helpful, professio
 Guidelines:
 - **Accuracy**: Prioritize accuracy. Do not hallucinate or guess drug interactions or dosages.
 - **Safety**: If a query involves critical safety or severe symptoms, advise consulting a healthcare professional immediately.
+- **Clarity**: Provide clear, concise information suitable for the user's level of understanding.
 
 Question:
 {question}<|im_end|>
 <|im_start|>assistant
 """
             self.template = template
-            print("Model template initialized.")
+            print("Qwen model template initialized.")
         else:
             self.template = None
 
-    def query(self, question: str):
+    def query(self, question: str, user_type: str = 'patient', context: str = ''):
         if not self.llm:
             return "Chat service is still initializing or missing resources. Please try again later."
         

@@ -11,6 +11,32 @@ logger = logging.getLogger(__name__)
 
 chat_bp = Blueprint('chat', __name__)
 
+
+@chat_bp.route('/init', methods=['POST'])
+def init_chat():
+    """Initialize chat session"""
+    try:
+        data = request.json or {}
+        user_email = data.get('user_email', 'anonymous')
+
+        import uuid
+        session_id = session.get('chat_session_id') or str(uuid.uuid4())
+        session['chat_session_id'] = session_id
+
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'welcome_message': "Welcome to **LIFEXIA**! I'm your AI-powered health assistant.\n\nI can help you with:\n- **Drug Information** - Dosages, side effects, interactions\n- **Nearby Hospitals** - Use the Health Grid map above\n- **Emergency Help** - Quick access to emergency contacts\n- **WhatsApp Support** - Toggle 'Send to WhatsApp' below\n\nHow can I assist you today?"
+        })
+    except Exception as e:
+        logger.error(f"Chat init error: {e}")
+        return jsonify({
+            'success': True,
+            'session_id': 'default',
+            'welcome_message': 'Welcome to LIFEXIA! How can I help you today?'
+        })
+
+
 @chat_bp.route('/query', methods=['POST'])
 def process_chat_query():
     """
