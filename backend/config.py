@@ -15,6 +15,7 @@ class Config:
     
     WHATSAPP_ACCESS_TOKEN = os.getenv('WHATSAPP_ACCESS_TOKEN')
     WHATSAPP_PHONE_NUMBER_ID = os.getenv('WHATSAPP_PHONE_NUMBER_ID')
+    WHATSAPP_VERIFY_TOKEN = os.getenv('WHATSAPP_VERIFY_TOKEN', '')
     ADMIN_WHATSAPP_NUMBER = os.getenv('ADMIN_WHATSAPP_NUMBER')
     
     LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'Qwen/Qwen2.5-3B-Instruct')

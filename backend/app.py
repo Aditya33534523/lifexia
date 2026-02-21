@@ -11,9 +11,13 @@ FIXES APPLIED:
 from flask import Flask, render_template, jsonify, request, session
 from flask_cors import CORS
 from flask_session import Session
+from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
 import logging
+
+# Load .env BEFORE any os.getenv() calls
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -57,7 +61,7 @@ def create_app():
     # Import routes
     from backend.routes.chat_routes import chat_bp
     from backend.routes.whatsapp_routes import whatsapp_bp
-    from backend.routes.webhook_routes import webhook_bp, init_webhook_service
+    from backend.routes.webhook_routes import webhook_bp
     from backend.routes.map_routes import map_bp
     from backend.routes.auth_routes import auth_bp
     from backend.routes.history_routes import history_bp
@@ -80,7 +84,6 @@ def create_app():
 
         if whatsapp_access_token and whatsapp_phone_id:
             whatsapp_service = WhatsAppService(whatsapp_access_token, whatsapp_phone_id)
-            init_webhook_service(whatsapp_service)
             logger.info("✅ WhatsApp Service initialized successfully")
         else:
             logger.warning("⚠️ WhatsApp credentials not found in environment")
@@ -106,6 +109,7 @@ def create_app():
     app.config['RAG_SERVICE'] = rag_service
     app.config['WHATSAPP_SERVICE'] = whatsapp_service
     app.config['MAP_SERVICE'] = map_service
+    app.config['WHATSAPP_VERIFY_TOKEN'] = os.getenv('WHATSAPP_VERIFY_TOKEN', '')
 
     # Main routes
     @app.route('/')
